@@ -66,7 +66,7 @@ class Application {
 
 			// resolve controller
 			try {
-				this._controller[name] = require('../../../../src/Controller/' + path);
+				this._controller[name] = require('../../../src/Controller/' + path);
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.env.API_MODE === 'development') console.log(error);
