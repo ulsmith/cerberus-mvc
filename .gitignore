@@ -1,0 +1,12 @@
+template.yml
+template.yaml
+template.testing.*
+template.staging.*
+template.production.*
+packaged.template.*
+node_modules
+package-lock.json
+migration.json
+migration.testing.json
+migration.staging.json
+migration.production.json
