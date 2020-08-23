@@ -1,5 +1,5 @@
 # README
 
 ```
-npm install @cerberus/mvc
+npm install cerberus-mvc
 ```
