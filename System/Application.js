@@ -89,7 +89,7 @@ class Application {
 			.then(() => process.__client = { origin: request.headers.Origin })
 
 			// incoming middleware, run synchronously as each one impacts on the next
-			.then(() => this._middleware.in.reduce((p, mw) => p.then((req) => mw.in(req)), Promise.resolve(request)))
+			.then(() => this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(request)))
 
 			// run controller and catch errors
 			.then((req) => controller[req.method](req))
@@ -105,12 +105,12 @@ class Application {
 				return new Response(this._type, {
 					status: error.status || 500,
 					headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : error
+					body: error.name === 'RestError' ? error.message : 'system error'
 				});
 			})
-
+			
 			// outgoing middleware, run synchronously as each one impacts on the next
-			.then((response) => this._middleware.out.reduce((p, mw) => p.then((res) => mw.out(res)), Promise.resolve(response)))
+			.then((response) => this._middleware.out.reduce((p, mw) => p.then((r) => mw.out(r)), Promise.resolve(response)))
 
 			// finally catch any last issues in middleware and output back to lambda, important to ensure middleware can run in event of ocntroller error
 			.catch((error) => {
@@ -120,7 +120,7 @@ class Application {
 				return new Response(this._type, {
 					status: error.status || 500,
 					headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : error
+					body: error.name === 'RestError' ? error.message : 'system error'
 				});
 			});
 	}

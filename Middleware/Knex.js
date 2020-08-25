@@ -29,7 +29,12 @@ class Knex extends Middleware {
      */
 	out(response) {
 		let services = [];
-		for (const service in this.$services) if (this.$services[service].name === 'knex') services.push(this.$services[service].destroy());
+		for (const service in this.$services) {
+			if (this.$services[service].name === 'knex') {
+				services.push(this.$services[service].destroy().catch((error) => { }));
+			}
+		}
+
 		return Promise.all(services).then(() => response);
 	}
 }
