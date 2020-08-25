@@ -66,7 +66,7 @@ class Request {
 		this.method = data.httpMethod ? data.httpMethod.toLowerCase() : undefined;
 		this.path = data.path;
 		this.resource = data.resource === '/{error+}' ? undefined : data.resource;
-		this.parameters = { query: data.queryStringParameters, path: data.pathParameters };
+		this.parameters = { query: data.queryStringParameters || {}, path: data.pathParameters || {}};
 		this.headers = headers;
 		this.body = this._parseBody(data.body, headers['Content-Type']);
 	}
