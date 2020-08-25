@@ -24,7 +24,7 @@ class Rest extends Error {
 		// Maintains proper stack trace for where our error was thrown (only available on V8)
 		if (Error.captureStackTrace) Error.captureStackTrace(this, Rest);
 
-		this.name = 'Rest';
+		this.name = 'RestError';
 		this.exception = true;
 		this.message = typeof message === 'string' ? {message: message} : message;
 		this.statusCode = code;

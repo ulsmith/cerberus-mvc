@@ -24,7 +24,7 @@ class System extends Error {
 		// Maintains proper stack trace for where our error was thrown (only available on V8)
 		if (Error.captureStackTrace) Error.captureStackTrace(this, System);
 
-		this.name = 'System';
+		this.name = 'SystemError';
 		this.exception = true;
 		this.message = message;
 		this.details = details || {};
