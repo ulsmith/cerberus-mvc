@@ -84,6 +84,19 @@ class DataTools {
 	 * @return {String} The text string with properties spliced in using js template literals
 	 */
 	static text(...properties) { return properties[0].reduce((acc, cur, idx) => acc + properties[idx] + cur) }
+
+	/**
+	 * @public @static @name dataConditions
+	 * @description Get data conditions from headers, sort through headers to find any Data- prefixed headers for adjusting data out. if order? then convert name to column name
+	 * @param {...Mixed} properties The properties sent into to the method as an array
+	 * @return {String} The dataConditions string with properties spliced in using js template literals
+	 */
+	static dataConditions(headers) {
+		let cons = {};
+		for (const name in headers) if (name.indexOf('Data-') === 0) cons[DataTools.snakeToCamel(name.replace('Data-', '').toLowerCase())] = headers[name];
+		if (cons.order) cons.order = cons.order.split('.').map((o) => DataTools.camelToSnake(o)).join('_'); // remap userIdentity.name > user_identity_name
+		return cons;
+	}
 }
 
 module.exports = DataTools;

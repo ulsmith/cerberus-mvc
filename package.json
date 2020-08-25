@@ -1,6 +1,6 @@
 {
 	"name": "cerberus-mvc",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"description": "An MVC Stack for serverless architectures. Create, develop and debug MVC, publish to serverless function as a service architectures. Currently supporting AWS (API, Gateway, Lambda, RDS, S3, SQS, SES and more).",
 	"author": "Paul Smith <p@ulsmith.net>",
 	"license": "MIT",
