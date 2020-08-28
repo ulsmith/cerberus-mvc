@@ -13,6 +13,7 @@ var Response = require('./Response');
  */
 class Application {
 	constructor(type) {
+		process.__services = {};
 		this._middleware = { in: [], out: []};
 		this._controller = {};
 		this._types = ['aws'];
@@ -22,7 +23,6 @@ class Application {
 
 	service(s) {
 		s = !Array.isArray(s) ? [s] : s;
-		if (typeof process.__services !== 'object') process.__services = {};
 		for (let i = 0; i < s.length; i++) if (s[i].service) process.__services[s[i].service] = s[i];
 	}
 
