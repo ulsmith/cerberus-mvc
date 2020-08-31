@@ -272,7 +272,7 @@ function process() {
 		app.middleware(corsMiddleware);
 		app.middleware(knexMiddleware);
 
-		return app.run(req).then((response) => res.send(response));
+		return app.run(req).then((response) => res.set(response.headers).status(response.status).send(response.body));
 	});
 
 	// Start
