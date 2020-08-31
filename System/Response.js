@@ -12,8 +12,9 @@ var DataTools = require('../Library/DataTools');
  */
 class Response {
 	constructor (type, data) {
-		const types = ['aws'];
+		const types = ['aws', 'express'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
+
 		this.type = type;
 		this.status;
 		this.headers;
@@ -53,6 +54,20 @@ class Response {
 		// return nromalized request object
 		return {
 			statusCode: this.status,
+			headers: this.headers,
+			body: this.body
+		}
+	}
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
+	_expressConvert() {
+		// return nromalized request object
+		return {
+			status: this.status,
 			headers: this.headers,
 			body: this.body
 		}

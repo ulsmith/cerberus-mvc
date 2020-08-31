@@ -15,7 +15,7 @@ class Core {
 	 * @desciption Get the environment data available to the system
 	 * @return {Object} Middleware available
 	 */
-	get $environment() { return process.env }
+	get $environment() { return process.__environment }
 
 	/**
 	 * @public @get client

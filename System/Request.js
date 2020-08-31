@@ -12,7 +12,7 @@ var DataTools = require('../Library/DataTools');
  */
 class Request {
 	constructor (type, data) {
-		const types = ['aws'];
+		const types = ['aws', 'express'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 		
 		this.type = type;
@@ -65,7 +65,7 @@ class Request {
 		this.context = { id: data.requestContext.requestId, ipAddress: data.requestContext.identity.sourceIp },
 		this.method = data.httpMethod ? data.httpMethod.toLowerCase() : undefined;
 		this.path = data.path;
-		this.resource = data.resource === '/{error+}' ? undefined : data.resource;
+		this.resource = { path: data.resource === '/{error+}' ? undefined : data.resource };
 		this.parameters = { query: data.queryStringParameters || {}, path: data.pathParameters || {}};
 		this.headers = headers;
 		this.body = this._parseBody(data.body, headers['Content-Type']);
@@ -87,9 +87,61 @@ class Request {
 		this.context = { id: data.messageId, service: data.eventSource, receiptHandle: data.receiptHandle },
 		this.method = method;
 		this.path = resource;
-		this.resource = '/' + resource;
+		this.resource = { path: '/' + resource };
 		this.headers = { 'Content-Type': 'application/json' };
 		this.body = this._parseBody(data.body, this.headers['Content-Type']);
+	}
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
+	_expressParse(data) {
+		this.source = 'route';
+		this[`_${this.type}Route`](data);
+	}
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
+	_expressRoute(data) {
+		// template pull
+		let template;
+		try { template = require('../../../template.json') }
+		catch (e) { throw Error('Cannot located template.json in project root') }
+		
+		// normalize headers
+		const headers = {};
+		for (const key in data.headers) headers[DataTools.normalizeHeader(key)] = data.headers[key];
+
+		// normalized request object
+		this.context = { ipAddress: data.clientIp },
+		this.method = data.method ? data.method.toLowerCase() : undefined;
+		this.path = data.url.split('?')[0];
+
+		// this needs to be a regex match on the above path to routes
+		const resource = template.resources.find((r) => (r.method === 'any' || r.method.toLowerCase() === this.method) && (new RegExp('^' + r.path.replace(/{.+\+}/g, '.+').replace(/{.+}/g, '[^\/]+') + '$')).test(this.path));
+		let keys;
+		let values;
+		if (resource && resource.path) {
+			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{.+}/g, '([^\/]+)') + '$')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
+			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{.+}/g, '([^\/]+)') + '$')), (m) => values = m.slice(1, m.length));
+			this.resource = {
+				name: resource.name,
+				method: resource.method.toLowerCase(),
+				path: resource.path
+			};
+
+			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
+		}
+
+		// need to use a match to now pull any params out and stuff them in paramters under path
+		this.parameters = { query: data.query || {}, path: this.resource && keys.length > 0 && values.length > 0 ? Object.assign(...keys.map((k, i) => ({ [k]: values[i] }))) : {} };
+		this.headers = headers;
+		this.body = data.body;
 	}
 
 	_parseBody(body, type) {

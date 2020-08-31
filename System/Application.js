@@ -14,11 +14,22 @@ var Response = require('./Response');
 class Application {
 	constructor(type) {
 		process.__services = {};
+		process.__environment = {};
 		this._middleware = { in: [], out: []};
 		this._controller = {};
-		this._types = ['aws'];
+		this._types = ['aws', 'express'];
 		if (this._types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + this._types.join(', ') + ']');
 		this._type = type;
+
+		// get env vars
+		if (this._type === 'aws') process.__environment = Object.assign({}, process.env);
+		else if (this._type === 'express') {
+			try {
+				const template = require('../../../template.json');
+				if (template.global && template.global.environment) process.__environment = Object.assign({}, process.env, template.global.environment);
+			}
+			catch (e) { throw Error('Cannot located template.json in project root') }
+		}
 	}
 
 	service(s) {
@@ -50,17 +61,15 @@ class Application {
 		requests = requests.requests || [requests];
 
 		for (const request of requests) {
-			if (!request.resource) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'text/plain' }, body: `404 Not Found [${request.path}]` })).get());
+			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'text/plain' }, body: `404 Not Found [${request.path}]` })).get());
 
 			// parse resource to name and path 
 			let path = '', name = '';
-			if (request.resource) {
-				let resource = request.resource.split('/');
-				for (let i = 1; i < resource.length; i++) {
-					if (!!resource[i] && resource[i].charAt(0) === '{') continue;
-					name += resource[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
-					path += resource[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
-				}
+			let resourcePath = request.resource.path.split('/');
+			for (let i = 1; i < resourcePath.length; i++) {
+				if (!!resourcePath[i] && resourcePath[i].charAt(0) === '{') continue;
+				name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
+				path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 			}
 			path = path.substring(0, path.length - 1) + '.js';
 
@@ -70,7 +79,7 @@ class Application {
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.env.API_MODE === 'development') console.log(error);
-				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'text/plain' }, body: `404 Not Found [${request.path}]` })).get());
+				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'text/plain' }, body: `409 Resource missing for [${request.path}]` })).get());
 				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'text/plain' }, body: `500 Server Error [${request.path}]` })).get());
 			}
 
