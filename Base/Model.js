@@ -1,7 +1,7 @@
 'use strict';
 
 const Core = require('../System/Core.js');
-const SystemError = require('../Error/System.js');
+const ModelError = require('../Error/Model.js');
 const DataTools = require('../Library/DataTools');
 
 /**
@@ -131,7 +131,7 @@ class Model extends Core {
 	softDelete(id) { 
 		return this.model.where({ id: id })
 			.then((data) => {
-				if (!data[0]) throw new SystemError('Cannot soft delete record, record does not exist in original table');
+				if (!data[0]) throw new ModelError('Cannot soft delete record, record does not exist in original table');
 				return data[0];
 			})
 			.then((data) => this.db.table('deleted.' + this.table.replace('.', '___')).insert(data))
@@ -147,7 +147,7 @@ class Model extends Core {
 	softRestore(id) {
 		return this.db.table('deleted.' + this.table.replace('.', '___')).where({ id: id })
 			.then((data) => {
-				if (!data[0]) throw new SystemError('Cannot soft restore record, record does not exist deleted table');
+				if (!data[0]) throw new ModelError('Cannot soft restore record, record does not exist deleted table');
 				return data[0];
 			})
 			.then((data) => this.model.insert(data))
@@ -168,16 +168,16 @@ class Model extends Core {
 		let clean = {};
 		for (const key in this.columns) {
 			let dataKey = DataTools.snakeToCamel(key);
-			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) throw new SystemError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) throw new ModelError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
 						
 			if (data[dataKey] !== undefined && data[dataKey] !== null) {
-				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) throw new SystemError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
 				clean[key] = data[dataKey];
 			}
 		}
 
 		// empty
-		if (partial && Object.keys(clean).length < 1) throw new SystemError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+		if (partial && Object.keys(clean).length < 1) throw new ModelError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
 		return Object.keys(clean).length > 0 ? clean : undefined;
 	}
 
@@ -190,7 +190,7 @@ class Model extends Core {
      */
 	mapDataArrayToColumn(data, partial) {
 		if (partial && !data) return;
-		if (!data || !data.length) throw new SystemError('Data must be an array of data objects for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
+		if (!data || !data.length) throw new ModelError('Data must be an array of data objects for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
 
 		// array of data entries?
 		let allClean = [];
