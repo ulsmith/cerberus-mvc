@@ -61,7 +61,7 @@ class Application {
 		requests = requests.requests || [requests];
 
 		for (const request of requests) {
-			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'text/plain' }, body: `404 Not Found [${request.path}]` })).get());
+			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'application/json' }, body: { error: `404 Not Found [${request.path}]` }})).get());
 
 			// parse resource to name and path 
 			let path = '', name = '';
@@ -79,8 +79,8 @@ class Application {
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.env.API_MODE === 'development') console.log(error);
-				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'text/plain' }, body: `409 Resource missing for [${request.path}]` })).get());
-				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'text/plain' }, body: `500 Server Error [${request.path}]` })).get());
+				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'application/json' }, body: { error: `409 Resource missing for [${request.path}]` }})).get());
+				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'application/json' }, body: { error: `500 Server Error [${request.path}]` }})).get());
 			}
 
 			// process requests
@@ -88,8 +88,8 @@ class Application {
 		}
 
 		return Promise.all(promises)
-			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'text/plain' }, body: 'OK' })).get())
-			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'text/plain' }, body: '400 Could not process all requests' })).get()))
+			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'application/json' }, body: { success: 'OK' }})).get())
+			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: { error: '400 Could not process all requests' }})).get()))
 	}
 
 	_process(controller, request) {
@@ -110,11 +110,11 @@ class Application {
 			.catch((error) => {
 				// catch any other errors
 				if (error.name !== 'RestError') console.log(error);
-				
+
 				return new Response(this._type, {
 					status: error.status || 500,
-					headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : 'system error'
+					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+					body: { error: error.name === 'RestError' ? error.message : 'system error' }
 				});
 			})
 			
@@ -128,8 +128,8 @@ class Application {
 
 				return new Response(this._type, {
 					status: error.status || 500,
-					headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : 'system error'
+					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+					body: { error: error.name === 'RestError' ? error.message : 'system error' }
 				});
 			});
 	}
