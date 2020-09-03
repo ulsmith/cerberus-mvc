@@ -624,7 +624,7 @@ class User extends Model {
 	 * @description Base method when instantiating class
 	 */
 	constructor () {
-		super('air_sourcing', 'identity.user');
+		super('db_name', 'identity.user');
 	}
 
     /**
