@@ -26,7 +26,7 @@ class Rest extends Error {
 
 		this.name = 'RestError';
 		this.exception = true;
-		this.message = typeof message === 'string' ? {message: message} : message;
+		this.message = message;
 		this.status = code;
 	}
 }

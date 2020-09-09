@@ -34,7 +34,7 @@ class DataTools {
 			case 'enum': return typeof data === 'string' && type.indexOf('[' + data + ']') >= 0;
 			case 'json':
 			case 'jsonb':
-				try { return typeof data === 'string' && JSON.parse(data) }
+				try { return (typeof data === 'string' && JSON.parse(data)) || (typeof data === 'object' && JSON.stringify(data)) }
 				catch { return false }
 			case 'cidr':
 				return /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/.test(data) // IPv4 address
