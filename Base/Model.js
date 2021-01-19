@@ -120,7 +120,16 @@ class Model extends Core {
      * @param {Number} id The resource id to delete
      * @return {Promise} a resulting promise of data or error on failure
      */
-	delete(id) { return this.model.where({ id: id }).delete() }
+	delete(id) { return (typeof id === 'object' && id.hasOwnProperty('length') ? this.model.whereIn('id', id) : this.model.where({ id: id })).delete() }
+
+	/**
+	 * @public @method transactDelete
+	 * @description Transaction Delete single/many resource/s in a single table
+	 * @param {Object} trx The transaction to bind to
+	 * @param {Mixed} id The resource id or array to update or an object of where data
+	 * @return {Promise} a resulting promise of data or error on failure
+	 */
+	transactDelete(trx, id) { return (typeof id === 'object' && id.hasOwnProperty('length') ? this.db.transacting(trx).table(this.table).whereIn('id', id) : this.db.transacting(trx).table(this.table).where({ id: id })).delete() }
 
     /**
      * @public @method softDelete
