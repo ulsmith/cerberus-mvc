@@ -123,12 +123,12 @@ class Request {
 		this.path = data.url.split('?')[0];
 
 		// this needs to be a regex match on the above path to routes
-		const resource = template.resources.find((r) => (r.method === 'any' || r.method.toLowerCase() === this.method) && (new RegExp('^' + r.path.replace(/{.+\+}/g, '.+').replace(/{.+}/g, '[^\/]+') + '$')).test(this.path));
+		const resource = template.resources.find((r) => (r.method === 'any' || r.method.toLowerCase() === this.method) && (new RegExp('^' + r.path.replace(/{.+\+}/g, '.+').replace(/{[^}]+}/g, '[^\/]+') + '$')).test(this.path));
 		let keys;
 		let values;
 		if (resource && resource.path) {
-			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{.+}/g, '([^\/]+)') + '$')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
-			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{.+}/g, '([^\/]+)') + '$')), (m) => values = m.slice(1, m.length));
+			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
+			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => values = m.slice(1, m.length));
 			this.resource = {
 				name: resource.name,
 				method: resource.method.toLowerCase(),
