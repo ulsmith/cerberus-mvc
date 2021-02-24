@@ -28,6 +28,8 @@ class Rest extends Error {
 		this.exception = true;
 		this.message = message;
 		this.status = code;
+
+		if (process.__socket && process.__environment.API_MODE !== 'production') console.log(this);
 	}
 }
 

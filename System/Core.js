@@ -30,6 +30,20 @@ class Core {
 	 * @return {Object} Services available
 	 */
 	get $services() { return process.__services }
+
+	/**
+	 * @public @get socket
+	 * @desciption Get the socket available to the system
+	 * @return {Object} socket available
+	 */
+	get $socket() { return process.__socket }
+
+	/**
+	 * @public @get io
+	 * @desciption Get the io available to the system
+	 * @return {Object} io available
+	 */
+	get $io() { return process.__io }
 }
 
 module.exports = Core;

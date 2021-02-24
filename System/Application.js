@@ -17,13 +17,13 @@ class Application {
 		process.__environment = {};
 		this._middleware = { in: [], out: []};
 		this._controller = {};
-		this._types = ['aws', 'express'];
+		this._types = ['aws', 'express', 'socket'];
 		if (this._types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + this._types.join(', ') + ']');
 		this._type = type;
 
 		// get env vars
 		if (this._type === 'aws') process.__environment = Object.assign({}, process.env);
-		else if (this._type === 'express') {
+		else if (this._type === 'express' || this._type === 'socket') {
 			try {
 				const template = require('../../../template.json');
 				if (template.global && template.global.environment) process.__environment = Object.assign({}, process.env, template.global.environment);
@@ -59,6 +59,9 @@ class Application {
 		let promises = [];
 		let requests = new Request(this._type, data);
 		requests = requests.requests || [requests];
+
+		if (data.socket) process.__socket = data.socket;
+		if (data.io) process.__io = data.io;
 
 		for (const request of requests) {
 			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'application/json' }, body: { error: `404 Not Found [${request.path}]` }})).get());

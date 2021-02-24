@@ -12,7 +12,7 @@ var DataTools = require('../Library/DataTools');
  */
 class Response {
 	constructor (type, data) {
-		const types = ['aws', 'express'];
+		const types = ['aws', 'express', 'socket'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 
 		this.type = type;

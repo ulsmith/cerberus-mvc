@@ -28,6 +28,8 @@ class Model extends Error {
 		this.exception = true;
 		this.message = message;
 		this.details = details || {};
+
+		if (process.__socket && process.__environment.API_MODE !== 'production') console.log(this);
 	}
 }
 
