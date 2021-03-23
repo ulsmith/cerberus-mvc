@@ -1,7 +1,5 @@
 'use strict';
 
-/* DEPRECATED [Model.js] removal estimated in V1.1, switch to ModelKnex or use Model[DB Engine] for raw model access */
-
 const Core = require('../System/Core.js');
 const ModelError = require('../Error/Model.js');
 const DataTools = require('../Library/DataTools');
@@ -21,12 +19,13 @@ class Model extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table) {
+	constructor(dbname, table, createdCol, softDeleteCol) {
 		super();
 
 		this.dbname = dbname;
 		this.table = table;
-		console.log('DEPRECATED [cerberus-mvc > Base > Model.js] removal estimated in V1.1, switch to ModelKnex or use Model[DB Engine] for raw model access');
+		this.createdCol = createdCol;
+		this.softDeleteCol = softDeleteCol;
 	}
 
 	/**
@@ -52,7 +51,10 @@ class Model extends Core {
      * @param {Number} id The resource id to get
      * @return {Promise} a resulting promise of data or error on failure
      */
-	get(id) { return this.model.where({id: id}).limit(1).then((data) => data[0] || {}) }
+	get(id) { 
+		if (this.softDeleteCol) return this.model.where({ id: id }).andWhere({[this.softDeleteCol]: null}).limit(1).then((data) => data[0] || {});
+		return this.model.where({id: id}).limit(1).then((data) => data[0] || {});
+	}
 
     /**
      * @public @method find
@@ -60,14 +62,20 @@ class Model extends Core {
      * @param {Object} where The where object as key value, or knex style where object
      * @return {Promise} a resulting promise of data or error on failure
      */
-	find(where) { return this.model.where(where) }
+	find(where) { 
+		if (this.softDeleteCol) return this.model.where(where).andWhere({ [this.softDeleteCol]: null });
+		return this.model.where(where)
+	}
 
     /**
      * @public @method all
 	 * @description all resources from a single table
      * @return {Promise} a resulting promise of data or error on failure
      */
-	all() { return this.model.where(true) }
+	all() { 
+		if (this.softDeleteCol) this.model.where({ [this.softDeleteCol]: null });
+		return this.model.where(true);
+	}
 
     /**
      * @public @method transaction
@@ -140,15 +148,7 @@ class Model extends Core {
      * @param {Number} id The resource id to soft delete
      * @return {Promise} a resulting promise of data or error on failure
      */
-	softDelete(id) { 
-		return this.model.where({ id: id })
-			.then((data) => {
-				if (!data[0]) throw new ModelError('Cannot soft delete record, record does not exist in original table');
-				return data[0];
-			})
-			.then((data) => this.db.table('deleted.' + this.table.replace('.', '___')).insert(data))
-			.then(() => this.delete(id));
-	}
+	softDelete(id) { return this.model.where({ id: id }).update({ [this.softDeleteCol]: new Date() }) }
 
     /**
      * @public @method softRestore
@@ -156,15 +156,7 @@ class Model extends Core {
      * @param {Number} id The resource id to soft restore
      * @return {Promise} a resulting promise of data or error on failure
      */
-	softRestore(id) {
-		return this.db.table('deleted.' + this.table.replace('.', '___')).where({ id: id })
-			.then((data) => {
-				if (!data[0]) throw new ModelError('Cannot soft restore record, record does not exist deleted table');
-				return data[0];
-			})
-			.then((data) => this.model.insert(data))
-			.then(() => this.db.table('deleted.' + this.table.replace('.', '___')).where({ id: id }).delete(id));
-	}
+	softRestore(id) { return this.model.where({ id: id }).update({ [this.softDeleteCol]: null }) }
 
     /**
      * @public @method mapDataToColumn

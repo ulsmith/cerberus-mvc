@@ -1,7 +1,5 @@
 'use strict';
 
-/* DEPRECATED [Model.js] removal estimated in V1.1, switch to ModelKnex or use Model[DB Engine] for raw model access */
-
 const Core = require('../System/Core.js');
 const ModelError = require('../Error/Model.js');
 const DataTools = require('../Library/DataTools');
@@ -21,12 +19,16 @@ class Model extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table) {
+	constructor(dbname, table, softDelete, idCol, createdCol, updatedCol, deleteCol) {
 		super();
 
 		this.dbname = dbname;
 		this.table = table;
-		console.log('DEPRECATED [cerberus-mvc > Base > Model.js] removal estimated in V1.1, switch to ModelKnex or use Model[DB Engine] for raw model access');
+		this.softDelete = softDelete;
+		this.idCol = idCol || 'id';
+		this.createdCol = createdCol || 'created';
+		this.updatedCol = updatedCol || 'updated';
+		this.deleteCol = deleteCol || 'deleted';
 	}
 
 	/**
@@ -34,17 +36,14 @@ class Model extends Core {
 	 * @desciption Get the services available to the system
 	 * @return {Knex} Knex service abstracted to db
 	 */
-	get db() { return this.$services[this.dbname] }
+	get db() { return this.$services['postgres:' + this.dbname] }
 
 	/**
-	 * @private @get model
-	 * @description Get the service locked to table set in this.table
-	 * @return {Knex}, locked to table if set in child model
+	 * @public @get notSoftDeleted
+	 * @desciption Get insertable for soft delete check
+	 * @return {String} The query insertable for checking soft delete, if set
 	 */
-	get model() {
-		if (!this.table) throw new Error(`Cannot call base model method without setting this.table property in ${this.constructor.name} model`);
-		return this.db.table(this.table);
-	}
+	get notSoftDeleted() { return this.softDelete ? `${this.inject(this.deleteCol)} IS NULL` : '' }
 	
     /**
 	 * @public @method get
@@ -52,7 +51,7 @@ class Model extends Core {
      * @param {Number} id The resource id to get
      * @return {Promise} a resulting promise of data or error on failure
      */
-	get(id) { return this.model.where({id: id}).limit(1).then((data) => data[0] || {}) }
+	get(id) { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.inject(this.idCol)} = $1 AND ${this.notSoftDeleted} LIMIT 1;`, [id]).then((res) => res.rows[0] || {}) }
 
     /**
      * @public @method find
@@ -60,42 +59,74 @@ class Model extends Core {
      * @param {Object} where The where object as key value, or knex style where object
      * @return {Promise} a resulting promise of data or error on failure
      */
-	find(where) { return this.model.where(where) }
+	find(where) { 
+		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
+		let v = Object.values(where);
+
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted};`, v).then((res) => res.rows);
+	}
+
+	/**
+	 * @public @method first
+	 * @description Find one or more resources from a where object in a single table
+	 * @param {Object} where The where object as key value, or knex style where object
+	 * @return {Promise} a resulting promise of data or error on failure
+	 */
+	first(where) {
+		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then((res) => res.rows[0] || {}); 
+
+		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
+		let v = Object.values(where);
+
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+	}
+
+	/**
+	 * @public @method last
+	 * @description Find one or more resources from a where object in a single table
+	 * @param {Object} where The where object as key value, or knex style where object
+	 * @return {Promise} a resulting promise of data or error on failure
+	 */
+	last(where) {
+		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then((res) => res.rows[0] || {}); 
+
+		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
+		let v = Object.values(where);
+
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+	}
 
     /**
      * @public @method all
 	 * @description all resources from a single table
      * @return {Promise} a resulting promise of data or error on failure
      */
-	all() { return this.model.where(true) }
-
-    /**
-     * @public @method transaction
-	 * @description Proxy out the transaction method from knex to class
-     * @param {Method} func The function to pass on
-     * @return {Promise} a resulting promise of data or error on failure
-     */
-	transaction(func) { return this.db.transaction(func) }
+	all() { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted};`) }
 	
     /**
      * @public @method insert
 	 * @description Insert single/many resource/s in a single table, clear any default data (id, created, updated)
-     * @param {Object} data The object data to insert into the resource as {key: value}
+     * @param {Array[Object]|Object} data The object data to insert into the resource as {key: value}
 	 * @param {Mixed} returning The array of returned columns or a string
      * @return {Promise} a resulting promise of data or error on failure
      */
-	insert(data, returning) { return this.model.insert(this.__cleanIncommingData(data)).returning(returning || 'id') }
+	insert(data, returning) { 
+		data = this.__cleanIncommingData(data, true);
+		if (typeof data === 'object' && data.length === undefined) data = [data];
 
-    /**
-     * @public @method transactInsert
-	 * @description Transaction Insert single/many resource/s in a single table, clear any default data (id, created, updated)
-     * @param {Object} trx The transaction to bind to
-     * @param {Object} data The object data to insert into the resource as {key: value}
-	 * @param {Mixed} returning The array of returned columns or a string
-     * @return {Promise} a resulting promise of data or error on failure
-     */
-	transactInsert(trx, data, returning) { return this.db.transacting(trx).table(this.table).insert(this.__cleanIncommingData(data)).returning(returning || 'id') }
-	
+		let qk = Object.keys(data[0]).map((k) => `${this.inject(k)}`).join(',');
+		let qv = data.map((d, i) => '(' + Object.values(d).map((dd, ii) => `$${(Object.values(d).length * i) + ii + 1}`).join(',') + ')').join(',');
+		let v = data.flatMap((d) => Object.values(d));
+
+		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
+		console.log(5, JSON.stringify(data));
+		console.log(55, `INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`);
+		console.log(555, JSON.stringify(v));
+		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`, v).then((res) => res.rows || []);
+	}
+
     /**
 	 * @public @method update
 	 * @description Update a single resource in a single table by table id, clear any default data (id, created, updated)
@@ -104,66 +135,44 @@ class Model extends Core {
 	 * @param {Mixed} returning The array of returned columns or a string
 	 * @return {Promise} a resulting promise of data or error on failure
      */
-	update(where, data, returning) { return this.model.where(typeof where === 'object' ? where : { id: where }).update(this.__cleanIncommingData(data)).returning(returning || 'id') }
-	
-	/**
-	 * @public @method transactUpdate
-	 * @description Transaction Insert single/many resource/s in a single table, clear any default data (id, created, updated)
-	 * @param {Object} trx The transaction to bind to
-	 * @param {Mixed} where The resource id to update or an object of where data
-	 * @param {Object} data The object data to insert into the resource as {key: value}
-	 * @param {Mixed} returning The array of returned columns or a string
-	 * @return {Promise} a resulting promise of data or error on failure
-	 */
-	transactUpdate(trx, where, data, returning) { return this.db.transacting(trx).table(this.table).where(typeof where === 'object' ? where : { id: where }).update(this.__cleanIncommingData(data)).returning(returning || 'id') }
+	update(where, data, returning) {
+		data = this.__cleanIncommingData(data);
+		if (!where || ['object', 'string', 'number'].indexOf(typeof where) < 0) throw new Error('Must use where criteria in update as either an ID or object containing col: value');
+		if (typeof where !== 'object') where = { id: where };
+		if (Object.keys(where).length < 1) throw new Error('Must have at least one where criteria in where object');
 
+		let qu = Object.keys(data).map((d, i) => ` ${this.inject(d)} = $${(i + 1)} `).join(','); 
+		let dl = Object.keys(data).length;
+		let qw = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${(i + 1 + dl)} `).join(' AND ');
+		let v = [...Object.values(data), ...Object.values(where)];
+
+		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
+		console.log(1234, `UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`);
+		console.log(12345, JSON.stringify(v));
+		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`, v).then((res) => res.rows || []);
+	}
+	
 	/**
      * @public @method delete
 	 * @description Delete a single resource in a single table by table id
      * @param {Number} id The resource id to delete
      * @return {Promise} a resulting promise of data or error on failure
      */
-	delete(id) { return (typeof id === 'object' && id.hasOwnProperty('length') ? this.model.whereIn('id', id) : this.model.where({ id: id })).delete() }
-
-	/**
-	 * @public @method transactDelete
-	 * @description Transaction Delete single/many resource/s in a single table
-	 * @param {Object} trx The transaction to bind to
-	 * @param {Mixed} id The resource id or array to update or an object of where data
-	 * @return {Promise} a resulting promise of data or error on failure
-	 */
-	transactDelete(trx, id) { return (typeof id === 'object' && id.hasOwnProperty('length') ? this.db.transacting(trx).table(this.table).whereIn('id', id) : this.db.transacting(trx).table(this.table).where({ id: id })).delete() }
-
-    /**
-     * @public @method softDelete
-	 * @description Soft delete a single resource from a table that has a corresponding backup table, pushing the value to that table
-     * @param {Number} id The resource id to soft delete
-     * @return {Promise} a resulting promise of data or error on failure
-     */
-	softDelete(id) { 
-		return this.model.where({ id: id })
-			.then((data) => {
-				if (!data[0]) throw new ModelError('Cannot soft delete record, record does not exist in original table');
-				return data[0];
-			})
-			.then((data) => this.db.table('deleted.' + this.table.replace('.', '___')).insert(data))
-			.then(() => this.delete(id));
+	delete(id, hard) { 
+		if (!this.deleteCol || hard) return this.db.query(`DELETE FROM ${this.inject(this.table)} WHERE id = $1;`, [id]);
+	
+		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${this.inject(this.deleteCol)} = $1 WHERE ${this.inject(this.idCol)} = $2;`, [new Date(), id]);
 	}
 
     /**
-     * @public @method softRestore
-	 * @description Soft restore a single resource in a single table that has been soft deleted
+     * @public @method restore
+	 * @description Soft restore a single resource (undelete) in a single table that has been soft deleted
      * @param {Number} id The resource id to soft restore
      * @return {Promise} a resulting promise of data or error on failure
      */
-	softRestore(id) {
-		return this.db.table('deleted.' + this.table.replace('.', '___')).where({ id: id })
-			.then((data) => {
-				if (!data[0]) throw new ModelError('Cannot soft restore record, record does not exist deleted table');
-				return data[0];
-			})
-			.then((data) => this.model.insert(data))
-			.then(() => this.db.table('deleted.' + this.table.replace('.', '___')).where({ id: id }).delete(id));
+	restore(id) {
+		if (!this.deleteCol) throw new Error('Must set soft delete column in super request to use this feature.');
+		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${this.inject(this.deleteCol)} = $1 WHERE ${this.inject(this.idCol)} = $2;`, [null, id]);
 	}
 
     /**
@@ -236,13 +245,25 @@ class Model extends Core {
 		return true
 	}
 
+	/**
+	 * @public @method inject
+	 * @description Prepares text to inject into SQL directly for column names and such removing bad chars, quoting non * refs. WARNING! only inject variables for column names etc, NOT data!
+	 * @param {String} text The string to inject into SQL that needs cleaning
+	 * @return {String} a cleaned string
+	 */
+	inject(text) {
+		text = text.replace(/[^a-zA-Z_.*]/g, '');
+		return text.split('.').map((t) => t === '*' ? t : `"${t}"`).join('.');
+	}
+
     /**
      * @private @method __cleanIncommingData
 	 * @description Clean any incomming data free of default values set by the DB directly
      * @param {Mixed} data The resource data to clean or array of data
+     * @param {Bool} skipId Should we skip ID
      * @return {Mixed} The cleaned data object or array of objects
      */
-	__cleanIncommingData(data) {
+	__cleanIncommingData(data, skipId) {
 		if (!data) return;
 
 		if (data.length > 0) {
@@ -253,9 +274,10 @@ class Model extends Core {
 
 		let cleaned = Object.assign({}, data);
 		
-		if (cleaned.id) delete cleaned.id;
-		if (cleaned.created) delete cleaned.created;
-		if (cleaned.updated) delete cleaned.updated;
+		if (this.idCol && cleaned[this.idCol] && !skipId) delete cleaned[this.idCol];
+		if (this.createdCol && cleaned[this.createdCol]) delete cleaned[this.createdCol];
+		if (this.updatedCol && cleaned[this.updatedCol]) delete cleaned[this.updatedCol];
+		if (this.deletedCol && cleaned[this.deletedCol]) delete cleaned[this.deletedCol];
 
 		return cleaned;
 	}
