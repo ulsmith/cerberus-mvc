@@ -8,3 +8,7 @@ Also pushed console logging out to JSON.stringify due to bug with AWS lambda log
 ## 1.0.13
 
 Added missing Middleware and Service for PG native
+
+## 1.0.14
+
+Cleanup of logging

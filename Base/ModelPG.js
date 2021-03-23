@@ -121,9 +121,7 @@ class Model extends Core {
 		let v = data.flatMap((d) => Object.values(d));
 
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
-		console.log(5, JSON.stringify(data));
-		console.log(55, `INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`);
-		console.log(555, JSON.stringify(v));
+
 		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`, v).then((res) => res.rows || []);
 	}
 
@@ -147,8 +145,7 @@ class Model extends Core {
 		let v = [...Object.values(data), ...Object.values(where)];
 
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
-		console.log(1234, `UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`);
-		console.log(12345, JSON.stringify(v));
+
 		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`, v).then((res) => res.rows || []);
 	}
 	
