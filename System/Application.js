@@ -64,7 +64,7 @@ class Application {
 		if (data.io) process.__io = data.io;
 
 		for (const request of requests) {
-			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'application/json' }, body: { error: `404 Not Found [${request.path}]` }})).get());
+			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'application/json' }, body: `404 Not Found [${request.path}]` })).get());
 
 			// parse resource to name and path 
 			let path = '', name = '';
@@ -82,8 +82,8 @@ class Application {
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
-				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'application/json' }, body: { error: `409 Resource missing for [${request.path}]` }})).get());
-				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'application/json' }, body: { error: `500 Server Error [${request.path}]` }})).get());
+				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'application/json' }, body: `409 Resource missing for [${request.path}]` })).get());
+				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'application/json' }, body: `500 Server Error [${request.path}]` })).get());
 			}
 
 			// process requests
@@ -92,7 +92,7 @@ class Application {
 
 		return Promise.all(promises)
 			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'application/json' }, body: { success: 'OK' }})).get())
-			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: { error: '400 Could not process all requests' }})).get()))
+			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: '400 Could not process all requests' })).get()))
 	}
 
 	_process(controller, request) {
@@ -112,12 +112,13 @@ class Application {
 			}))
 			.catch((error) => {
 				// catch any other errors
-				if (error.name !== 'RestError') console.log(error.message, JSON.stringify(error.stack));
+				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
 
+				// other errors like model, service etc (custom)
 				return new Response(this._type, {
-					status: error.status || 500,
+					status: error.name === 'Error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: { error: error.name === 'RestError' ? error.message : 'system error' }
+					body: (error.name === 'Error' ? 'system error' : error.message)
 				});
 			})
 			
@@ -127,12 +128,13 @@ class Application {
 			// finally catch any last issues in middleware and output back to lambda, important to ensure middleware can run in event of ocntroller error
 			.catch((error) => {
 				// catch any other errors
-				if (error.name !== 'RestError') console.log(error.message, JSON.stringify(error.stack));
+				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
 
+				// other errors like model, service etc (custom)
 				return new Response(this._type, {
-					status: error.status || 500,
+					status: error.name === 'Error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: { error: error.name === 'RestError' ? error.message : 'system error' }
+					body: (error.name === 'Error' ? 'system error' : error.message)
 				});
 			});
 	}
