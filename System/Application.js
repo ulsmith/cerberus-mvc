@@ -118,7 +118,7 @@ class Application {
 				return new Response(this._type, {
 					status: error.name === 'Error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: (error.name === 'Error' ? 'system error' : error.message)
+					body: error.name === 'RestError' ? error.message : (error.name === 'Error' ? 'system error' : error)
 				});
 			})
 			
@@ -134,7 +134,7 @@ class Application {
 				return new Response(this._type, {
 					status: error.name === 'Error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: (error.name === 'Error' ? 'system error' : error.message)
+					body: error.name === 'RestError' ? error.message : (error.name === 'Error' ? 'system error' : error)
 				});
 			});
 	}
