@@ -39,11 +39,11 @@ class Model extends Core {
 	get db() { return this.$services['postgres:' + this.dbname] }
 
 	/**
-	 * @public @get notSoftDeleted
+	 * @public notSoftDeleted
 	 * @desciption Get insertable for soft delete check
 	 * @return {String} The query insertable for checking soft delete, if set
 	 */
-	get notSoftDeleted() { return this.softDelete ? `${this.inject(this.deleteCol)} IS NULL` : '' }
+	notSoftDeleted(prefix) { return this.softDelete ? `${prefix} ${this.inject(this.deleteCol)} IS NULL` : '' }
 	
     /**
 	 * @public @method get
@@ -51,7 +51,7 @@ class Model extends Core {
      * @param {Number} id The resource id to get
      * @return {Promise} a resulting promise of data or error on failure
      */
-	get(id) { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.inject(this.idCol)} = $1 AND ${this.notSoftDeleted} LIMIT 1;`, [id]).then((res) => res.rows[0] || {}) }
+	get(id) { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.inject(this.idCol)} = $1 ${this.notSoftDeleted('AND')} LIMIT 1;`, [id]).then((res) => res.rows[0] || {}) }
 
     /**
      * @public @method find
@@ -63,7 +63,7 @@ class Model extends Core {
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted};`, v).then((res) => res.rows);
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')};`, v).then((res) => res.rows);
 	}
 
 	/**
@@ -74,12 +74,12 @@ class Model extends Core {
 	 */
 	first(where) {
 		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
-		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then((res) => res.rows[0] || {}); 
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then((res) => res.rows[0] || {}); 
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`, v).then((res) => res.rows[0] || {});
 	}
 
 	/**
@@ -90,12 +90,12 @@ class Model extends Core {
 	 */
 	last(where) {
 		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
-		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then((res) => res.rows[0] || {}); 
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then((res) => res.rows[0] || {}); 
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} AND ${this.notSoftDeleted} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`, v).then((res) => res.rows[0] || {});
 	}
 
     /**
@@ -103,7 +103,7 @@ class Model extends Core {
 	 * @description all resources from a single table
      * @return {Promise} a resulting promise of data or error on failure
      */
-	all() { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.notSoftDeleted};`) }
+	all() { return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')};`) }
 	
     /**
      * @public @method insert
@@ -155,8 +155,9 @@ class Model extends Core {
      * @param {Number} id The resource id to delete
      * @return {Promise} a resulting promise of data or error on failure
      */
-	delete(id, hard) { 
-		if (!this.deleteCol || hard) return this.db.query(`DELETE FROM ${this.inject(this.table)} WHERE id = $1;`, [id]);
+	delete(id, type) { 
+		// soft delete off and not explicitly soft, or explicitly hard
+		if ((!this.softDelete && type !== 'soft') || type === 'hard') return this.db.query(`DELETE FROM ${this.inject(this.table)} WHERE id = $1;`, [id]);
 	
 		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${this.inject(this.deleteCol)} = $1 WHERE ${this.inject(this.idCol)} = $2;`, [new Date(), id]);
 	}
@@ -168,7 +169,6 @@ class Model extends Core {
      * @return {Promise} a resulting promise of data or error on failure
      */
 	restore(id) {
-		if (!this.deleteCol) throw new Error('Must set soft delete column in super request to use this feature.');
 		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${this.inject(this.deleteCol)} = $1 WHERE ${this.inject(this.idCol)} = $2;`, [null, id]);
 	}
 
