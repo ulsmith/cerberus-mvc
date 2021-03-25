@@ -73,7 +73,7 @@ class Model extends Core {
 	 * @return {Promise} a resulting promise of data or error on failure
 	 */
 	first(where) {
-		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
+		if (!this.createdCol) throw new ModelError('Must set created column in super request to use this feature.');
 		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then((res) => res.rows[0] || {}); 
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
@@ -89,7 +89,7 @@ class Model extends Core {
 	 * @return {Promise} a resulting promise of data or error on failure
 	 */
 	last(where) {
-		if (!this.createdCol) throw new Error('Must set created column in super request to use this feature.');
+		if (!this.createdCol) throw new ModelError('Must set created column in super request to use this feature.');
 		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then((res) => res.rows[0] || {}); 
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${i + 1} `).join(' AND ');
@@ -122,7 +122,12 @@ class Model extends Core {
 
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
 
-		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`, v).then((res) => res.rows || []);
+		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`, v)
+			.then((res) => res.rows || [])
+			.catch((error) => {
+				if (error.code == 23505) throw new ModelError('Cannot duplicate a unique value, value already exists', this.columns);
+				throw error;
+			});
 	}
 
     /**
@@ -135,9 +140,9 @@ class Model extends Core {
      */
 	update(where, data, returning) {
 		data = this.__cleanIncommingData(data);
-		if (!where || ['object', 'string', 'number'].indexOf(typeof where) < 0) throw new Error('Must use where criteria in update as either an ID or object containing col: value');
+		if (!where || ['object', 'string', 'number'].indexOf(typeof where) < 0) throw new ModelError('Must use where criteria in update as either an ID or object containing col: value');
 		if (typeof where !== 'object') where = { id: where };
-		if (Object.keys(where).length < 1) throw new Error('Must have at least one where criteria in where object');
+		if (Object.keys(where).length < 1) throw new ModelError('Must have at least one where criteria in where object');
 
 		let qu = Object.keys(data).map((d, i) => ` ${this.inject(d)} = $${(i + 1)} `).join(','); 
 		let dl = Object.keys(data).length;
@@ -146,7 +151,12 @@ class Model extends Core {
 
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
 
-		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`, v).then((res) => res.rows || []);
+		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`, v)
+			.then((res) => res.rows || [])
+			.catch((error) => {
+				if (error.code == 23505) throw new ModelError('Cannot duplicate a unique value, value already exists', this.columns);
+				throw error;
+			});
 	}
 	
 	/**
@@ -180,7 +190,7 @@ class Model extends Core {
      * @return {Object} a resulting promise of data or error on failure
      */
 	mapDataToColumn(data, partial) {
-		if (!this.columns) throw new Error('Cannot map data without setting columns getter in model [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
+		if (!this.columns) throw new ModelError('Cannot map data without setting columns getter in model [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
 		
 		// single entry
 		let clean = {};
