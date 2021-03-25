@@ -116,9 +116,9 @@ class Application {
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
-					status: error.name === 'Error' ? 500 : error.status || 400,
+					status: error.name.toLowerCase() === 'error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : (error.name === 'Error' ? 'system error' : error)
+					body: error.name.toLowerCase() === 'resterror' ? error.message : (error.name.toLowerCase() === 'error' ? 'system error' : error)
 				});
 			})
 			
@@ -132,9 +132,9 @@ class Application {
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
-					status: error.name === 'Error' ? 500 : error.status || 400,
+					status: error.name.toLowerCase() === 'error' ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name === 'RestError' ? error.message : (error.name === 'Error' ? 'system error' : error)
+					body: error.name.toLowerCase() === 'resterror' ? error.message : (error.name.toLowerCase() === 'error' ? 'system error' : error)
 				});
 			});
 	}
