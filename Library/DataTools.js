@@ -51,7 +51,7 @@ class DataTools {
 	 * @param {String} s The string for camelification
 	 * @return {String} The camelified string
 	 */
-	static normalizeHeader(s) { return (s.charAt(0).toUpperCase() + s.slice(1)).replace(/\-\w/g, (m) => '-' + m[1].toUpperCase()) }
+	static normalizeHeader(s) { return (s.charAt(0).toUpperCase() + s.toLowerCase().slice(1)).replace(/\-\w/g, (m) => '-' + m[1].toUpperCase()) }
 
 	/**
 	 * @public @static @name snakeToCamel
@@ -59,7 +59,18 @@ class DataTools {
 	 * @param {String} s The string for camelification
 	 * @return {String} The camelified string
 	 */
-	static snakeToCamel(s) { return s.replace(/\_\w|-\w/g, (m) => m[1].toUpperCase()) }
+	static snakeToCamel(s) { return s.toLowerCase().replace(/\_\w|-\w/g, (m) => m[1].toUpperCase()) }
+
+	/**
+	 * @public @static @name snakeToCamel
+	 * @description Turn a snake case string using underscores to camel case
+	 * @param {String} s The string for camelification
+	 * @return {String} The camelified string
+	 */
+	static snakeToCapital(s) { 
+		s = DataTools.snakeToCamel(s);
+		return s.charAt(0).toUpperCase() + s.slice(1);
+	}
 
 	/**
 	 * @public @static @name camelToSnake

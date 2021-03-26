@@ -108,7 +108,7 @@ class Application {
 			.then((out) => new Response(this._type, {
 				status: out && out.body && out.status ? out.status : 200,
 				headers: { ...{ 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }, ...(out && out.body && out.headers ? out.headers : {}) },
-				body: out && out.body ? out.body : (out ? out : null)
+				body: out && out.body && out.status ? out.body : (out ? out : null)
 			}))
 			.catch((error) => {
 				// catch any other errors

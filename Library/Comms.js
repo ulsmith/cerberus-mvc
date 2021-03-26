@@ -25,7 +25,7 @@ class Comms {
 	 * @public @name email
 	 * @description send smtp email, must be from a verified email in AWS
 	 * @param {String} s The string to hash
-	 * @return {String} A hash of the string
+	 * @return {Promise} The result as a promise
 	 */
 	email(to, from, subject, html, text) {
 		// send message as not blocked
