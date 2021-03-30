@@ -158,30 +158,40 @@ class Model extends Core {
      */
 	softRestore(id) { return this.model.where({ id: id }).update({ [this.softDeleteCol]: null }) }
 
-    /**
-     * @public @method mapDataToColumn
+	/**
+	 * @public @method mapDataToColumn
 	 * @description Map all incoming data, to columns to make sure we have a full dataset, or send partial flag true to map only partial dataset
-     * @param {Object} data The data to check against the columns
-     * @param {Boolean} partial The flag to force a partial map on only data available in dataset
-     * @return {Object} a resulting promise of data or error on failure
-     */
+	 * @param {Object} data The data to check against the columns
+	 * @param {Boolean} partial The flag to force a partial map on only data available in dataset
+	 * @return {Object} a resulting promise of data or error on failure
+	 */
 	mapDataToColumn(data, partial) {
-		if (!this.columns) throw new Error('Cannot map data without setting columns getter in model [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
-		
+		if (!this.columns) throw new ModelError('Cannot map data without setting columns getter in model [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']');
+
 		// single entry
 		let clean = {};
 		for (const key in this.columns) {
 			let dataKey = DataTools.snakeToCamel(key);
-			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) throw new ModelError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
-						
+			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) {
+				let columns = Object.keys(this.columns).reduce((p, c) => ({ ...p, ...{ [DataTools.snakeToCamel(c)]: this.columns[c] } }), {});
+				throw new ModelError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+			}
+
 			if (data[dataKey] !== undefined && data[dataKey] !== null) {
-				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) {
+					let columns = Object.keys(this.columns).reduce((p, c) => ({ ...p, ...{ [DataTools.snakeToCamel(c)]: this.columns[c] } }), {});
+					throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+				}
 				clean[key] = this.columns[key].type.split('[')[0].toLowerCase().indexOf('json') < 0 ? data[dataKey] : (typeof data[dataKey] === 'string' ? data[dataKey] : JSON.stringify(data[dataKey]));
 			}
 		}
 
 		// empty
-		if (partial && Object.keys(clean).length < 1) throw new ModelError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+		if (partial && Object.keys(clean).length < 1) {
+			let columns = Object.keys(this.columns).reduce((p, c) => ({ ...p, ...{ [DataTools.snakeToCamel(c)]: this.columns[c] } }), {});
+			throw new ModelError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+		}
+
 		return Object.keys(clean).length > 0 ? clean : undefined;
 	}
 

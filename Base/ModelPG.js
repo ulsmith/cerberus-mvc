@@ -196,16 +196,26 @@ class Model extends Core {
 		let clean = {};
 		for (const key in this.columns) {
 			let dataKey = DataTools.snakeToCamel(key);
-			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) throw new ModelError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
-						
+			if ((!data || data[dataKey] === undefined || data[dataKey] === null) && this.columns[key].required && !partial) {
+				let columns = Object.keys(this.columns).reduce((p, c) => ({...p, ...{[DataTools.snakeToCamel(c)]: this.columns[c]}}), {});
+				throw new ModelError('Invalid data, required property [' + dataKey + '] missing from [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+			}
+
 			if (data[dataKey] !== undefined && data[dataKey] !== null) {
-				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) {
+					let columns = Object.keys(this.columns).reduce((p, c) => ({...p, ...{[DataTools.snakeToCamel(c)]: this.columns[c]}}), {});
+					throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+				}
 				clean[key] = this.columns[key].type.split('[')[0].toLowerCase().indexOf('json') < 0 ? data[dataKey] : (typeof data[dataKey] === 'string' ? data[dataKey] : JSON.stringify(data[dataKey]));
 			}
 		}
 
 		// empty
-		if (partial && Object.keys(clean).length < 1) throw new ModelError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
+		if (partial && Object.keys(clean).length < 1) {
+			let columns = Object.keys(this.columns).reduce((p, c) => ({...p, ...{[DataTools.snakeToCamel(c)]: this.columns[c]}}), {});
+			throw new ModelError('Invalid data, must have at least one property in [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+		}
+
 		return Object.keys(clean).length > 0 ? clean : undefined;
 	}
 
