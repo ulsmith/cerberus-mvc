@@ -81,7 +81,7 @@ class Application {
 				this._controller[name] = require('../../../src/Controller/' + path);
 				request.access = this._controller[name][request.method];
 			} catch (error) {
-				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
 				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'application/json' }, body: `409 Resource missing for [${request.path}]` })).get());
 				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'application/json' }, body: `500 Server Error [${request.path}]` })).get());
 			}
@@ -112,7 +112,7 @@ class Application {
 			}))
 			.catch((error) => {
 				// catch any other errors
-				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
@@ -128,7 +128,7 @@ class Application {
 			// finally catch any last issues in middleware and output back to lambda, important to ensure middleware can run in event of ocntroller error
 			.catch((error) => {
 				// catch any other errors
-				if (process.env.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
