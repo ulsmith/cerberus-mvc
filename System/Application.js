@@ -15,6 +15,7 @@ class Application {
 	constructor(type) {
 		process.__services = {};
 		process.__environment = {};
+		process.__handler = {};
 		this._middleware = { in: [], out: []};
 		this._controller = {};
 		this._types = ['aws', 'express', 'socket'];
@@ -26,7 +27,10 @@ class Application {
 		else if (this._type === 'express' || this._type === 'socket') {
 			try {
 				const template = require('../../../template.json');
-				if (template.global && template.global.environment) process.__environment = Object.assign({}, process.env, template.global.environment);
+				if (template.global) {
+					if (template.global.environment) process.__environment = Object.assign({}, process.env, template.global.environment);
+					if (template.global.handler) process.__handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
+				} 
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
@@ -55,7 +59,7 @@ class Application {
 		for (let i = 0; i < mw.length; i++) if (mw[i].out) this._middleware.out.push(mw[i]);
 	}
 
-	run(data) {
+	async run(data) {
 		let promises = [];
 		let requests = new Request(this._type, data);
 		requests = requests.requests || [requests];
@@ -74,11 +78,11 @@ class Application {
 				name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
 				path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 			}
-			path = path.substring(0, path.length - 1) + '.js';
+			path = path.substring(0, path.length - 1) + (process.__handler.type === 'es-module' ? '.mjs' : '.js');
 
 			// resolve controller
 			try {
-				this._controller[name] = require('../../../src/Controller/' + path);
+				this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import('../../../src/Controller/' + path))[0] : require('../../../src/Controller/' + path));
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));

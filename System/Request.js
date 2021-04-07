@@ -127,8 +127,8 @@ class Request {
 		let keys;
 		let values;
 		if (resource && resource.path) {
-			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
-			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => values = m.slice(1, m.length));
+			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
+			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => values = m.slice(1, m.length));
 			this.resource = {
 				name: resource.name,
 				method: resource.method.toLowerCase(),
@@ -179,8 +179,8 @@ class Request {
 		let keys;
 		let values;
 		if (resource && resource.path) {
-			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
-			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$')), (m) => values = m.slice(1, m.length));
+			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
+			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => values = m.slice(1, m.length));
 			this.resource = {
 				name: resource.name,
 				method: resource.method.toLowerCase(),
