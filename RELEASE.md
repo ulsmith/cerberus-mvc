@@ -1,5 +1,8 @@
 # RELEASE
 
+## 1.0.24
+
+Debuggin for bad db connection details
 ## 1.0.23
 
 Reques fixes due to node 14.X needing global flag on math all... also support for es6 modular imports.
