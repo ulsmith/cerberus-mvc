@@ -31,7 +31,9 @@ class Postgres extends Middleware {
 		let services = [];
 		for (const service in this.$services) {
 			if (this.$services[service].name === 'postgres') {
-				services.push(this.$services[service].connect().catch((error) => { }));
+				services.push(this.$services[service].connect().catch((error) => {
+					if (this.$environment.API_MODE === 'development') console.log('Check ALL connection settings: ' + error.message, JSON.stringify(error.stack));
+				}));
 			}
 		}
 
@@ -48,7 +50,9 @@ class Postgres extends Middleware {
 		let services = [];
 		for (const service in this.$services) {
 			if (this.$services[service].name === 'postgres') {
-				services.push(this.$services[service].end().catch((error) => { }));
+				services.push(this.$services[service].end().catch((error) => {
+					if (this.$environment.API_MODE === 'development') console.log('Check ALL connection settings: ' + error.message, JSON.stringify(error.stack));
+				}));
 			}
 		}
 
