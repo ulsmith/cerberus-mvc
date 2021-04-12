@@ -72,6 +72,15 @@ class Response {
 			body: this.body
 		}
 	}
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
+	_socketConvert() {
+		return;
+	}
 }
 
 module.exports = Response;

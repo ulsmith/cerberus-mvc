@@ -193,7 +193,7 @@ class Request {
 		// need to use a match to now pull any params out and stuff them in paramters under path
 		this.parameters = { path: this.resource && keys.length > 0 && values.length > 0 ? Object.assign(...keys.map((k, i) => ({ [k]: values[i] }))) : {} };
 		this.headers = headers;
-		this.body = data.data;
+		this.body = this._parseBody(data.data, headers['Content-Type']);
 	}
 
 	_parseBody(body, type) {
