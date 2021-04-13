@@ -68,7 +68,20 @@ class Application {
 		if (data.io) process.__io = data.io;
 
 		for (const request of requests) {
-			if (!request.resource || !request.resource.path) return Promise.resolve((new Response(this._type, { status: 404, headers: { 'Content-Type': 'application/json' }, body: `404 Not Found [${request.path}]` })).get());
+			if (!request.resource || !request.resource.path) {
+				return Promise.resolve((new Response(this._type, {
+					status: 404,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': request && request.headers && request.headers.Origin ? request.headers.Origin : '*',
+						'Access-Control-Allow-Credentials': 'true',
+						'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+						'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+						'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+					},
+					body: `404 Not Found [${request.path}]`
+				})).get());
+			}
 
 			// parse resource to name and path 
 			let path = '', name = '';
@@ -86,8 +99,34 @@ class Application {
 				request.access = this._controller[name][request.method];
 			} catch (error) {
 				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
-				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) return Promise.resolve((new Response(this._type, { status: 409, headers: { 'Content-Type': 'application/json' }, body: `409 Resource missing for [${request.path}]` })).get());
-				return Promise.resolve((new Response(this._type, { status: 500, headers: { 'Content-Type': 'application/json' }, body: `500 Server Error [${request.path}]` })).get());
+				
+				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) {
+					return Promise.resolve((new Response(this._type, {
+						status: 409,
+						headers: {
+							'Content-Type': 'application/json',
+							'Access-Control-Allow-Origin': request && request.headers && request.headers.Origin ? request.headers.Origin : '*',
+							'Access-Control-Allow-Credentials': 'true',
+							'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+							'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+							'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+						},
+						body: `409 Resource missing for [${request.path}]`
+					})).get());
+				}
+				
+				return Promise.resolve((new Response(this._type, {
+					status: 500,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': request && request.headers && request.headers.Origin ? request.headers.Origin : '*',
+						'Access-Control-Allow-Credentials': 'true',
+						'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+						'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+						'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+					},
+					body: `500 Server Error [${request.path}]`
+				})).get());
 			}
 
 			// process requests
