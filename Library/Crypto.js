@@ -288,29 +288,39 @@ class Crypto {
 	/**
 	 * @public @static @name encryptAES256CBC
 	 * @description Create a 256bit AES encrypted string
-	 * @param {String} text The string to hash
+	 * @param {String} string The string to encrypt
+	 * @param {String} password The 64bit key to use
 	 * @return {String} An encrypted string
-	 * @example encrypt('Something');
+	 * @example encryptAES256CBC('Something', 'ABC...XYZ');
 	 */
 	static encryptAES256CBC(string, password) {
-		var cipher = crypto.createCipher('aes-256-cbc', password)
-		var crypted = cipher.update(string, 'utf8', 'hex')
-		crypted += cipher.final('hex');
-		return crypted;
+		if (password.length !== 64) throw Error('Invalid key length, requires 64bit key');
+		let iv = crypto.randomBytes(16);
+		let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(password, 'hex'), iv);
+		let crypted = cipher.update(string);
+		crypted = Buffer.concat([crypted, cipher.final()]);
+
+		return iv.toString('hex') + ':' + crypted.toString('hex');
 	}
 
 	/**
 	 * @public @static @name decryptAES256CBC
 	 * @description Decrypt a 256bit AES encrypted string
-	 * @param {String} text The string to hash
+	 * @param {String} string The string to decrypt
+	 * @param {String} password The 64bit key to use
 	 * @return {String} A decrypted string
-	 * @example let a = decrypt('...');
+	 * @example let decryptedString = decryptAES256CBC('ab3927d55ge....fdfdf44dfd', 'ABC...XYZ');
 	 */
 	static decryptAES256CBC(string, password) {
-		var decipher = crypto.createDecipher('aes-256-cbc', password)
-		var dec = decipher.update(string, 'hex', 'utf8')
-		dec += decipher.final('utf8');
-		return dec;
+		if (password.length !== 64) throw Error('Invalid key length, requires 64bit key');
+		let textParts = string.split(':');
+		let iv = Buffer.from(textParts.shift(), 'hex');
+		let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+		let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(password, 'hex'), iv);
+		let decrypted = decipher.update(encryptedText);
+		decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+		return decrypted.toString();
 	}
 
     /**
