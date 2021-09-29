@@ -1,5 +1,8 @@
 # RELEASE
 
+## 1.0.29
+
+Fixed faulty crypto classes
 ## 1.0.24
 
 Debuggin for bad db connection details
