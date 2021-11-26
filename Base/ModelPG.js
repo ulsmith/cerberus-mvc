@@ -207,6 +207,8 @@ class Model extends Core {
 					throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
 				}
 				clean[key] = this.columns[key].type.split('[')[0].toLowerCase().indexOf('json') < 0 ? data[dataKey] : (typeof data[dataKey] === 'string' ? data[dataKey] : JSON.stringify(data[dataKey]));
+			} else if (data[dataKey] === null) {
+				clean[key] = null;
 			}
 		}
 

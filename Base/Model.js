@@ -185,6 +185,8 @@ class Model extends Core {
 			if (data[dataKey] !== undefined && data[dataKey] !== null) {
 				if (!DataTools.checkType(data[dataKey], this.columns[key].type)) throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', this.columns);
 				clean[key] = this.columns[key].type.split('[')[0].toLowerCase().indexOf('json') < 0 ? data[dataKey] : (typeof data[dataKey] === 'string' ? data[dataKey] : JSON.stringify(data[dataKey]));
+			} else if (data[dataKey] === null) {
+				clean[key] = null;
 			}
 		}
 
