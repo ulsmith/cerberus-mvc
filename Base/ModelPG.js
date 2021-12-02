@@ -271,7 +271,7 @@ class Model extends Core {
 	 * @return {String} a cleaned string
 	 */
 	inject(text) {
-		text = text.replace(/[^a-zA-Z_.*]/g, '');
+		text = text.replace(/[^a-zA-Z0-9_.*]/g, '');
 		return text.split('.').map((t) => t === '*' ? t : `"${t}"`).join('.');
 	}
 
