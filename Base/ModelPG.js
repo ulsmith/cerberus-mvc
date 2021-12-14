@@ -154,7 +154,7 @@ class Model extends Core {
 		let dl = 0;
 		let qu = Object.keys(data).map((d, i) => {
 			dl++;
-			if (this.columns[d].type !== 'point') return ` ${this.inject(d)} = $${(dl)} `;
+			if (!this.columns[d] || this.columns[d].type !== 'point') return ` ${this.inject(d)} = $${(dl)} `;
 			dl++; // points have two bits of data
 			return ` ${this.inject(d)} = POINT($${(dl - 1)}, $${(dl)}) `;
 		}).join(','); 
