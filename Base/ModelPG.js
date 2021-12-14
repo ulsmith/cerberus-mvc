@@ -117,9 +117,16 @@ class Model extends Core {
 		if (typeof data === 'object' && data.length === undefined) data = [data];
 
 		let qk = Object.keys(data[0]).map((k) => `${this.inject(k)}`).join(',');
-		let qv = data.map((d, i) => '(' + Object.values(d).map((dd, ii) => `$${(Object.values(d).length * i) + ii + 1}`).join(',') + ')').join(',');
-		let v = data.flatMap((d) => Object.values(d));
-
+		let cc = 0;
+		let qv = data.map((d, i) => '(' + Object.values(d).map((dd, ii) => {
+			cc++;
+			if (dd && !isNaN(dd.x) && !isNaN(dd.y)) {
+				cc++;
+				return `POINT($${cc-1}, $${cc})`;
+			}
+			return `$${cc}`;
+		}).join(',') + ')').join(',');
+		let v = data.flatMap((d) => Object.values(d).flatMap((d) => d && !isNaN(d.x) && !isNaN(d.y) ? [d.x, d.y] : d));
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
 
 		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv} ${r};`, v)
@@ -144,11 +151,16 @@ class Model extends Core {
 		if (typeof where !== 'object') where = { id: where };
 		if (Object.keys(where).length < 1) throw new ModelError('Must have at least one where criteria in where object');
 
-		let qu = Object.keys(data).map((d, i) => ` ${this.inject(d)} = $${(i + 1)} `).join(','); 
-		let dl = Object.keys(data).length;
+		let dl = 0;
+		let qu = Object.keys(data).map((d, i) => {
+			dl++;
+			if (this.columns[d].type !== 'point') return ` ${this.inject(d)} = $${(dl)} `;
+			dl++; // points have two bits of data
+			return ` ${this.inject(d)} = POINT($${(dl - 1)}, $${(dl)}) `;
+		}).join(','); 
 		let qw = Object.keys(where).map((w, i) => ` ${this.inject(w)} = $${(i + 1 + dl)} `).join(' AND ');
-		let v = [...Object.values(data), ...Object.values(where)];
-
+		// flatten any point data
+		let v = [...Object.values(data).flatMap((d) => d && !isNaN(d.x) && !isNaN(d.y) ? [d.x, d.y] : d), ...Object.values(where)];
 		let r = typeof returning === 'string' ? `RETURNING ${this.inject(returning)}` : (Array.isArray(returning) ? 'RETURNING ' + returning.map((ret) => this.inject(ret)).join(',') : '');
 
 		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw} ${r};`, v)
@@ -206,6 +218,13 @@ class Model extends Core {
 					let columns = Object.keys(this.columns).reduce((p, c) => ({...p, ...{[DataTools.snakeToCamel(c)]: this.columns[c]}}), {});
 					throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
 				}
+
+				// check for point types
+				if (this.columns[key].type.split('[')[0].toLowerCase().includes('point') && (!data[dataKey] || isNaN(data[dataKey].x) || isNaN(data[dataKey].y))) {
+					let columns = Object.keys(this.columns).reduce((p, c) => ({ ...p, ...{ [DataTools.snakeToCamel(c)]: this.columns[c] } }), {});
+					throw new ModelError('Invalid data, property [' + dataKey + '] type incorrect, requires point data as {x: ..., y: ... } for [' + DataTools.snakeToCamel(this.table.split('.')[1]) + ']', columns);
+				}
+
 				clean[key] = this.columns[key].type.split('[')[0].toLowerCase().indexOf('json') < 0 ? data[dataKey] : (typeof data[dataKey] === 'string' ? data[dataKey] : JSON.stringify(data[dataKey]));
 			} else if (data[dataKey] === null) {
 				clean[key] = null;
