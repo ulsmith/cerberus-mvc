@@ -182,6 +182,106 @@ class Model extends Core {
 	}
 
 	/**
+	 * @public @method queryWhere
+	 * @description Builds an SQL query snippit to add on to a query, from an object including where property or simple key values matching table names
+	 * @param {Object} args Arguments to work through
+	 * @param {Array} values Values object pointer to fill with values as they are created for binding to be used in execution
+	 * @return {String} The SQL snippit to add to SQL query
+	 * @example 
+	 * SIMPLE QUERY (as AND)
+	 *  { id: '12345', name: 'test' }
+	 * 
+	 * COMPLEX QUERY (nested and various types)
+	 * 	{
+	 *		"where": [
+	 *			{ "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" },
+	 *			{ "chain": "AND", "key": "id", "condition": "IN", "value": ["00231a73a9981d63b0f11a789a46ccb1"] },
+	 *			{ "chain": "AND", "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" },
+	 *			{
+	 *				"chain": "OR",
+	 *				"where": [
+	 *					{ "key": "id", "condition": "IS", "value": null },
+	 *					{ "chain": "OR", "key": "id", "condition": "NOT", "value": "abc123" },
+	 *					{ "chain": "OR", "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" }
+	 *				]
+	 *			}
+	 *		]
+	 *	}
+	 */
+	queryWhere(args, values) {
+		if (Object.keys(args.where || args).length < 1) return '';
+
+		return ' WHERE ' + this.__parseWhere(args, values);
+	}
+	
+	/**
+	 * @public @method queryOrder
+	 * @description Builds a query snippit to add on to a query string adding ORDER BY from arguments passed in
+	 * @param {Object} args Arguments to work through as the whole argument list containing the order/orderBy as a property
+	 * @return {String} The snippit to add to query as SQL snippet
+	 * @example 
+	 * {
+	 *    order/orderBy: [
+	 *        { key: "reference", direction: "ASC" },
+	 *        { key: "id", direction: "ASC" }
+	 *    ]
+	 * }
+	 * 
+	 */
+	queryOrder(args) {
+		if (!args || (!args.order && !args.orderBy)) return '';
+
+		let ord = args.order || args.orderBy || args;
+		let ords = Array.isArray(ord) ? ord : [ord];
+
+		let q = '';
+		for (let i = 0; i < ords.length; i++) {
+			if (!ords[i].key) throw new ModelError(`Cannot parse order, key [${ords[i].key}] key missing`);
+			if (!ords[i].direction) throw new ModelError(`Cannot parse order, value [${ords[i].direction}] direction missing`);
+			if (!this.columns[DataTools.camelToSnake(ords[i].key)]) throw new ModelError(`Cannot set order, key [${key}] not found in data`);
+			q += ` ${i > 0 ? ',' : ''} ${this.inject(DataTools.camelToSnake(this.table + '.' + ords[i].key))} ${this.__parseDirection(ords[i].direction || 'ASC')} `;
+		}
+
+		return 'ORDER BY ' + q;
+	}
+
+	/**
+	 * @public @method queryLimit
+	 * @description Builds a query snippit to add on to a query string adding LIMIT from arguments passed in
+	 * @param {Object} args Arguments to work through as a whole argument list containing the limit as a property 
+	 * @return {String} The snippit to add to query as SQL snippet
+	 * @example
+	 *   {
+	 *    	limit: 10
+	 *   }
+	 */
+	queryLimit(args) {
+		if (!args || !args.limit) return '';
+		let limit = Number(args.limit);
+		if (!limit) return '';
+
+		return ` LIMIT ${limit} `;
+	}
+
+	/**
+	 * @public @method queryOffset
+	 * @description Builds a query snippit to add on to a query string adding OFFSET from arguments passed in
+	 * @param {Object} args Arguments to work through as a whole argument list containing the offset as a property
+	 * @return {String} The snippit to add to query as SQL snippet
+	 * @example 
+	 *   {
+	 *    	offset: 10
+	 *   }
+	 */
+	queryOffset(args) {
+		if (!args || !args.offset) return '';
+		let offset = Number(args.offset);
+		if (!offset) return '';
+
+		return ` OFFSET ${offset} `;
+	}
+
+	/**
 	 * @public @method mapDataToColumn
 	 * @description Map all incoming data, to columns to make sure we have a full dataset, or send partial flag true to map only partial dataset
 	 * @param {Object} data The data to check against the columns
@@ -303,6 +403,172 @@ class Model extends Core {
 		if (this.deletedCol && cleaned[this.deletedCol]) delete cleaned[this.deletedCol];
 
 		return cleaned;
+	}
+
+	/**
+	 * @private @method __parseWhere
+	 * @description Recursive where clause parser, building nested where SQL strings from objects
+	 * @param {Object} args The data to use for where building as a nested where object
+	 * @param {Array} values The values to bind to as a pointer so they can be passed in to SQL execution
+	 * @return {String} The where portion of the SQL string as the whole or recursive part
+	 */
+	__parseWhere(args, values) {
+		if (typeof args !== 'object') throw new ModelError('Cannot set where criteria, structure incorrect');
+
+		// if more than one, then and them
+		let q = '';
+
+		// need to loop through the where object now and build up the query adding to string
+		let w = args.where || args; // map all where
+		let c = 0;
+		for (let k in w) {
+			// sub query? then tag on with chain type
+			if (w[k] && w[k].where) {
+				q += ` ${c === 0 ? '' : (w[k].chain ? this.__parseChain(w[k].chain) : 'AND')} (${this.__parseWhere(w[k], values)}) `;
+				c++;
+				continue;
+			}
+
+			// is this direct simple matchy or detailed chainy, map to common vars
+			let key = Array.isArray(w) ? w[k].key : k;
+			let val = this.__parseValue(Array.isArray(w) ? w[k] : w[k]);
+			let con = this.__parseCondition(Array.isArray(w) ? w[k].condition || '=' : '='); // default to equals
+			let chn = this.__parseChain(Array.isArray(w) ? w[k].chain || 'AND' : 'AND'); // default to AND
+
+			// do we need to override val and con? if single val in array and default = switch to single val, if more values and default = switch to IN
+			if (Array.isArray(val) && val.length < 2 && con === '=') val = val[0];
+			if (Array.isArray(val) && val.length > 1 && con === '=') con = 'IN';
+			if (con === '=' && val === null) con = 'IS NULL';
+			if (con === '!=' && val === null) con = 'IS NOT NULL';
+
+			// check key is present in colum list
+			if (!this.columns[DataTools.camelToSnake(key)]) throw new ModelError(`Cannot set where criteria, key [${key}] not found in data`);
+
+			// map out how many binds we need, push values seperately if IN or push first if not and dont push if value null as we type it out
+			let bnd = '';
+			if (val !== null) {
+				if (con === 'IN' && Array.isArray(val)) {
+					val.map((v) => values.push(v));
+					bnd = '(' + val.map((v) => '?').join(',') + ')';
+				}
+				else {
+					values.push(Array.isArray(val) ? val[0] : val);
+					bnd = '?';
+				}
+			}
+
+			// do we re-parse or not
+			q += ` ${c === 0 ? '' : chn} ${this.inject(DataTools.camelToSnake(this.table + '.' + key))} ${con} ${bnd} `;
+
+			// track count
+			c++;
+		}
+
+		return q;
+	}
+
+	/**
+	 * @private @method __parseValue
+	 * @description Parser for values to pull them from many typed or generic property names casting to types
+	 * @param {Object} val The value sent in as an object with a typeed property such as { boolean: true, string: 'test', number: 1, date: '2018-01-01', value: 'anything' }
+	 * @param {Array} values The values to bind to as a pointer
+	 * @return {String} The where portion of the clause
+	 */
+	__parseValue(val) {
+		// simple query with a null value or array
+		if (val === null) return null;
+
+		// complex query with a specific value
+		if (typeof val === 'object') {
+			if (val.value || val.value === null) return val.value;
+			if (val.string || val.string === null) return String(val.string);
+			if (val.number || val.number === null) return Number(val.number);
+			if (val.booolean || val.boolean === null) return Boolean(val.boolean);
+			if (val.date || val.date === null) return Date(val.date);
+		}
+
+		// else just return it
+		return val; // not typed so just return
+	}
+
+	/**
+	 * @private @method __parseCondition
+	 * @description Parser for condition used in comparison logic, changing into SQL string
+	 * @param {String} con The condition string to be changed to SQL string
+	 * @return {String} The condition as SQL string
+	 */
+	__parseCondition(con) {
+		switch (con ? con.toLowerCase() : undefined) {
+			case '=': 
+			case 'equal':
+			case 'equals':
+			case 'is':
+				return '=';
+			case 'gt':
+			case 'greater_than':
+			case 'greater than':
+				return '>';
+			case 'lt':
+			case 'less_than':
+			case 'less than':
+				return '<';
+			case 'lk':
+			case 'like':
+				return 'LIKE';
+			case '!':
+			case '!=':
+			case 'nt':
+			case 'not':
+			case 'not_equal':
+			case 'not_equals':
+			case 'is_not':
+				return '!=';
+			case '[]':
+			case '()':
+			case 'in':
+				return 'IN';
+			default: throw new ModelError(`Cannot parse where condition [${con}], structure incorrect`);
+		}
+	}
+
+	/**
+	 * @private @method __parseChain
+	 * @description Parser for the chain used in chaining arguments such as AND or OR changing to SQL format
+	 * @param {String} chn The chain string to be changed to SQL string
+	 * @return {String} The SQL string used to chain arguments
+	 */
+	__parseChain(chn) {
+		switch (chn ? chn.toLowerCase() : undefined) {
+			case '&':
+			case '&&':
+			case 'and':
+				return 'AND';
+			case '|':
+			case '||':
+			case 'or':
+				return 'OR';
+			default: throw new ModelError(`Cannot parse where chain [${chn}], structure incorrect`);
+		}
+	}
+
+	/**
+	 * @private @method __parseDirection
+	 * @description Parser for standardising incomming data to SQL equivelent
+	 * @param {String} dir The direction as a string in several ways
+	 * @return {String} The SQL standard sting
+	 */
+	__parseDirection(dir) {
+		switch (dir ? dir.toLowerCase() : undefined) {
+			case 'asc':
+			case 'ac':
+			case 'ascending':
+				return 'ASC';
+			case 'desc':
+			case 'dc':
+			case 'descending':
+				return 'DESC';
+			default: throw new ModelError(`Cannot parse order direction [${dir}], structure incorrect`);
+		}
 	}
 }
 
