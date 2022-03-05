@@ -512,6 +512,14 @@ class Model extends Core {
 			case 'less_than':
 			case 'less than':
 				return '<';
+			case 'gte':
+			case 'greater_than_equals':
+			case 'greater than equals':
+				return '>=';
+			case 'lte':
+			case 'less_than_equals':
+			case 'less than equals':
+				return '<=';
 			case 'lk':
 			case 'like':
 				return 'LIKE';
