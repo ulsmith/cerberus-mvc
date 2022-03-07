@@ -211,7 +211,7 @@ class Model extends Core {
 	queryWhere(args, values) {
 		if (Object.keys(args.where || args).length < 1) return '';
 
-		return ' WHERE ' + this.__parseWhere(args, values);
+		return ' WHERE ' + this.__parseQueryWhere(args, values);
 	}
 	
 	/**
@@ -279,6 +279,113 @@ class Model extends Core {
 		if (!offset) return '';
 
 		return ` OFFSET ${offset} `;
+	}
+
+	/**
+	 * @public @method arrayWhere
+	 * @description Builds an array filter to apply where style query to JSON arrays returned from a query, including where property or simple key values matching table names
+	 * @param {Object} args Arguments to work through
+	 * @param {Array} items Array of the items to filter with SQL where style filtering
+	 * @return {Array} The filtered array of items
+	 * @example 
+	 * SIMPLE QUERY (as AND)
+	 *  { id: '12345', name: 'test' }
+	 * 
+	 * COMPLEX QUERY (nested and various types)
+	 * 	{
+	 *		"where": [
+	 *			{ "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" },
+	 *			{ "chain": "AND", "key": "id", "condition": "IN", "value": ["00231a73a9981d63b0f11a789a46ccb1"] },
+	 *			{ "chain": "AND", "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" },
+	 *			{
+	 *				"chain": "OR",
+	 *				"where": [
+	 *					{ "key": "id", "condition": "IS", "value": null },
+	 *					{ "chain": "OR", "key": "id", "condition": "NOT", "value": "abc123" },
+	 *					{ "chain": "OR", "key": "id", "condition": "EQUALS", "value": "00231a73a9981d63b0f11a789a46ccb1" }
+	 *				]
+	 *			}
+	 *		]
+	 *	}
+	 */
+	arrayWhere(args, items) {
+		// find query args, or reject if function args
+		if (!args || args.fn || (args.qy && !args.qy.where)) return items;
+
+		return this.__parseArrayWhere(args.qy || args, items);
+	}
+
+	/**
+	 * @public @method arrayOrder
+	 * @description Builds a sorter snippit to sort an array of items in an SQL style 'order by' way
+	 * @param {Object} args Arguments to work through as the whole argument list containing the order/orderBy as a property
+	 * @param {Array} items Array of the items to filter with SQL where style filtering
+	 * @return {Array} The filtered array of items
+	 * @example 
+	 * {
+	 *    order/orderBy: [
+	 *        { key: "reference", direction: "ASC" },
+	 *        { key: "id", direction: "ASC" }
+	 *    ]
+	 * }
+	 * 
+	 */
+	arrayOrder(args, items) {
+		if (!args || (!args.order && !args.orderBy)) return items;
+
+		let ord = args.order || args.orderBy || args;
+		let ords = Array.isArray(ord) ? ord : [ord];
+
+		for (let i = 0; i < ords.length; i++) {
+			items = items.sort((a, b) => {
+				if (!a[ords[i].key]) throw new ModelError(`Cannot parse order key [${ords[i].key}], key does not exist`);
+				if (this.__parseDirection(ords[i].direction) === 'ASC') return a[ords[i].key] > b[ords[i].key] ? 1 : -1;
+				if (this.__parseDirection(ords[i].direction) === 'DESC') return a[ords[i].key] < b[ords[i].key] ? 1 : -1;
+				return 0;
+			})
+
+		}
+
+		return items;
+	}
+
+	/**
+	 * @public @method arrayLimit
+	 * @description Builds a splicer to splice 'limit' amount of records from an array in an SQL style way
+	 * @param {Object} args Arguments to work through as a whole argument list containing the limit as a property 
+	 * @param {Array} items Array of the items to filter with SQL where style filtering
+	 * @return {Array} The filtered array of items
+	 * @example
+	 *   {
+	 *    	limit: 10
+	 *   }
+	 */
+	arrayLimit(args, items) {
+		if (!args || !args.limit || !Array.isArray(items) || items.length < 1) return items;
+
+		let limit = Number(args.limit);
+		if (!limit) return items;
+
+		return items.splice(0, limit);
+	}
+
+	/**
+	 * @public @method arrayOffset
+	 * @description Builds a splicer to splice array from 'offset' from an array in an SQL style way
+	 * @param {Object} args Arguments to work through as a whole argument list containing the limit as a property 
+	 * @param {Array} items Array of the items to filter with SQL where style filtering
+	 * @example 
+	 *   {
+	 *    	offset: 10
+	 *   }
+	 */
+	arrayOffset(args, items) {
+		if (!args || !args.offset || !Array.isArray(items) || items.length < 1) return items;
+
+		let offset = Number(args.offset);
+		if (!offset) return items;
+
+		return items.splice(offset);
 	}
 
 	/**
@@ -406,14 +513,14 @@ class Model extends Core {
 	}
 
 	/**
-	 * @private @method __parseWhere
+	 * @private @method __parseQueryWhere
 	 * @description Recursive where clause parser, building nested where SQL strings from objects
 	 * @param {Object} args The data to use for where building as a nested where object
 	 * @param {Array} values The values to bind to as a pointer so they can be passed in to SQL execution
 	 * @return {String} The where portion of the SQL string as the whole or recursive part
 	 */
-	__parseWhere(args, values) {
-		if (typeof args !== 'object') throw new ModelError('Cannot set where criteria, structure incorrect');
+	__parseQueryWhere(args, values) {
+		if (typeof args !== 'object') throw new ModelError('Cannot set where criteria on query, structure incorrect');
 
 		// if more than one, then and them
 		let q = '';
@@ -424,7 +531,7 @@ class Model extends Core {
 		for (let k in w) {
 			// sub query? then tag on with chain type
 			if (w[k] && w[k].where) {
-				q += ` ${c === 0 ? '' : (w[k].chain ? this.__parseChain(w[k].chain) : 'AND')} (${this.__parseWhere(w[k], values)}) `;
+				q += ` ${c === 0 ? '' : (w[k].chain ? this.__parseChain(w[k].chain) : 'AND')} (${this.__parseQueryWhere(w[k], values)}) `;
 				c++;
 				continue;
 			}
@@ -436,13 +543,13 @@ class Model extends Core {
 			let chn = this.__parseChain(Array.isArray(w) ? w[k].chain || 'AND' : 'AND'); // default to AND
 
 			// do we need to override val and con? if single val in array and default = switch to single val, if more values and default = switch to IN
-			if (Array.isArray(val) && val.length < 2 && con === '=') val = val[0];
+			if (Array.isArray(val) && val.length < 2 && con !== 'IN') val = val[0];
 			if (Array.isArray(val) && val.length > 1 && con === '=') con = 'IN';
 			if (con === '=' && val === null) con = 'IS NULL';
 			if (con === '!=' && val === null) con = 'IS NOT NULL';
 
 			// check key is present in colum list
-			if (!this.columns[DataTools.camelToSnake(key)]) throw new ModelError(`Cannot set where criteria, key [${key}] not found in data`);
+			if (!this.columns[DataTools.camelToSnake(key)]) throw new ModelError(`Cannot set where criteria query, key [${key}] not found in data`);
 
 			// map out how many binds we need, push values seperately if IN or push first if not and dont push if value null as we type it out
 			let bnd = '';
@@ -465,6 +572,70 @@ class Model extends Core {
 		}
 
 		return q;
+	}
+
+	/**
+	 * @private @method __parseArrayWhere
+	 * @description Recursive where clause parser, filtering arrays of object in an SQL way
+	 * @param {Object} args The data to use for where building as a nested where object
+	 * @param {Array} items Array of the items to filter with SQL where style filtering
+	 * @return {Array} The filtered array of items
+	 */
+	__parseArrayWhere(args, items) {
+		if (typeof args !== 'object') throw new ModelError('Cannot set where criteria on array, structure incorrect');
+		if (Object.keys(args.where || args).length < 1) return items;
+
+		// need to loop through the where object now and build up the query adding to string
+		let w = args.where || args; // map all where
+
+		return items.filter((item) => {
+			// filter concolusion
+			let f = true;
+
+			for (let k in w) {
+				// sub query? then tag on with chain type
+				if (w[k] && w[k].where) {
+					f = (w[k].chain ? this.__parseChain(w[k].chain) : 'AND') === 'AND' ? f && this.__parseArrayWhere(w[k], items) : f || this.__parseArrayWhere(w[k], items);
+					continue;
+				}
+
+				// is this direct simple matchy or detailed chainy, map to common vars
+				let key = Array.isArray(w) ? w[k].key : k;
+				let val = this.__parseValue(Array.isArray(w) ? w[k] : w[k]);
+				let con = this.__parseCondition(Array.isArray(w) ? w[k].condition || '=' : '='); // default to equals
+				let chn = this.__parseChain(Array.isArray(w) ? w[k].chain || 'AND' : 'AND'); // default to AND
+
+				// do we need to override val and con? if single val in array and default = switch to single val, if more values and default = switch to IN
+				if (Array.isArray(val) && val.length < 2 && con !== 'IN') val = val[0];
+				if (Array.isArray(val) && val.length > 1 && con === '=') con = 'IN';
+
+				// check key is present in colum list
+				if (!item[key]) throw new ModelError(`Cannot set where criteria, key [${key}] not found in data`);
+
+				switch (chn + ' ' + con) {
+					case 'AND =': f = f && item[key] === val; break;
+					case 'AND >': f = f && item[key] > val; break;
+					case 'AND <': f = f && item[key] < val; break;
+					case 'AND >=': f = f && item[key] >= val; break;
+					case 'AND <=': f = f && item[key] <= val; break;
+					case 'AND !=': f = f && item[key] !== val; break;
+					case 'AND LIKE': f = f && (new RegExp(`^${val.replace(/\%|\*/g, '.*')}$`)).test(item[key]); break;
+					case 'AND NOT LIKE': f = f && !(new RegExp(`^${val.replace(/\%|\*/g, '.*')}$`)).test(item[key]); break;
+					case 'AND IN': f = f && val.includes(item[key]); break;
+					case 'OR =': f = f || item[key] === val; break;
+					case 'OR >': f = f || item[key] > val; break;
+					case 'OR <': f = f || item[key] < val; break;
+					case 'OR >=': f = f || item[key] >= val; break;
+					case 'OR <=': f = f || item[key] <= val; break;
+					case 'OR !=': f = f || item[key] !== val; break;
+					case 'OR LIKE': f = f || (new RegExp(`^${val.replace(/\%|\*/g, '.*')}$`)).test(item[key]); break;
+					case 'OR NOT LIKE': f = f || !(new RegExp(`^${val.replace(/\%|\*/g, '.*')}$`)).test(item[key]); break;
+					case 'OR IN': f = f || val.includes(item[key]); break;
+				}
+			}
+
+			return f;
+		});
 	}
 
 	/**
@@ -523,6 +694,10 @@ class Model extends Core {
 			case 'lk':
 			case 'like':
 				return 'LIKE';
+			case 'nl':
+			case 'not_like':
+			case 'not like':
+				return 'NOT LIKE';
 			case '!':
 			case '!=':
 			case 'nt':
