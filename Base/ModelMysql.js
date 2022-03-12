@@ -51,7 +51,7 @@ class Model extends Core {
 	 * @param {Number} id The resource id to get
 	 * @return {Promise} a resulting promise of data or error on failure
 	 */
-	get(id) { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.inject(this.idCol)} = ? ${this.notSoftDeleted('AND')} LIMIT 1;`, [id]).then((res) => res.rows[0] || {}) }
+	get(id) { return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${this.inject(this.idCol)} = ? ${this.notSoftDeleted('AND')} LIMIT 1;`, [id]).then(([rows]) => rows[0] || {}) }
 
 	/**
 	 * @public @method find
@@ -63,7 +63,7 @@ class Model extends Core {
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = ? `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')};`, v).then((res) => res.rows);
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')};`, v).then(([rows]) => rows);
 	}
 
 	/**
@@ -74,12 +74,12 @@ class Model extends Core {
 	 */
 	first(where) {
 		if (!this.createdCol) throw new ModelError('Must set created column in super request to use this feature.');
-		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then((res) => res.rows[0] || {});
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`).then(([rows]) => rows[0] || {});
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = ? `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} ASC LIMIT 1;`, v).then(([rows]) => rows[0] || {});
 	}
 
 	/**
@@ -90,12 +90,12 @@ class Model extends Core {
 	 */
 	last(where) {
 		if (!this.createdCol) throw new ModelError('Must set created column in super request to use this feature.');
-		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then((res) => res.rows[0] || {});
+		if (!where || Object.keys(where).length < 1) return this.db.query(`SELECT * FROM ${this.inject(this.table)} ${this.notSoftDeleted('WHERE')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`).then(([rows]) => rows[0] || {});
 
 		let q = Object.keys(where).map((w, i) => ` ${this.inject(w)} = ? `).join(' AND ');
 		let v = Object.values(where);
 
-		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`, v).then((res) => res.rows[0] || {});
+		return this.db.query(`SELECT * FROM ${this.inject(this.table)} WHERE ${q} ${this.notSoftDeleted('AND')} ORDER BY ${this.inject(this.createdCol)} DESC LIMIT 1;`, v).then(([rows]) => rows[0] || {});
 	}
 
 	/**
@@ -128,7 +128,7 @@ class Model extends Core {
 		}).join(',') + ')').join(',');
 		let v = data.flatMap((d) => Object.values(d).flatMap((d) => d && !isNaN(d.x) && !isNaN(d.y) ? [d.x, d.y] : d));
 
-		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv};`, v).then((res) => res.rows || []);
+		return this.db.query(`INSERT INTO ${this.inject(this.table)} (${qk}) VALUES ${qv};`, v).then(([rows]) => rows || []);
 	}
 
 	/**
@@ -155,7 +155,7 @@ class Model extends Core {
 		// flatten any point data
 		let v = [...Object.values(data).flatMap((d) => d && !isNaN(d.x) && !isNaN(d.y) ? [d.x, d.y] : d), ...Object.values(where)];
 		
-		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw};`, v).then((res) => res.rows || []);
+		return this.db.query(`UPDATE ${this.inject(this.table)} SET ${qu} WHERE ${qw};`, v).then(([rows]) => rows || []);
 	}
 
 	/**
@@ -186,6 +186,7 @@ class Model extends Core {
 	 * @description Builds an SQL query snippit to add on to a query, from an object including where property or simple key values matching table names
 	 * @param {Object} args Arguments to work through
 	 * @param {Array} values Values object pointer to fill with values as they are created for binding to be used in execution
+	 * @param {String} chain The chain type to join on with or default to 'WHERE' for no chain
 	 * @return {String} The SQL snippit to add to SQL query
 	 * @example 
 	 * SIMPLE QUERY (as AND)
@@ -208,10 +209,10 @@ class Model extends Core {
 	 *		]
 	 *	}
 	 */
-	queryWhere(args, values) {
+	queryWhere(args, values, chain) {
 		if (Object.keys(args.where || args).length < 1) return '';
 
-		return ' WHERE ' + this.__parseQueryWhere(args, values);
+		return ` ${chain || 'WHERE'} ` + this.__parseQueryWhere(args, values);
 	}
 	
 	/**
