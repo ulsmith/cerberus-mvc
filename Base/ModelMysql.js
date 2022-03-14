@@ -565,8 +565,9 @@ class Model extends Core {
 				}
 			}
 
-			// do we re-parse or not
-			q += ` ${c === 0 ? '' : chn} ${this.inject(DataTools.camelToSnake(this.table + '.' + key))} ${con} ${bnd} `;
+			// build up where string, does this need to be cast to date for date checks
+			if (w[k].date) q += ` ${c === 0 ? '' : chn} DATE(${this.inject(DataTools.camelToSnake(this.table + '.' + key))}) ${con} DATE(${bnd}) `;
+			else q += ` ${c === 0 ? '' : chn} DATE(${this.inject(DataTools.camelToSnake(this.table + '.' + key))}) ${con} DATE(${bnd}) `;
 
 			// track count
 			c++;
@@ -613,6 +614,13 @@ class Model extends Core {
 				// check key is present in colum list
 				if (!item[key]) throw new ModelError(`Cannot set where criteria, key [${key}] not found in data`);
 
+				// if this is a date check we need to convert DateTime to date
+				if (w[k].date) {
+					val = new Date(val).toISOString().split('T')[0];
+					item[key] = new Date(item[key]).toISOString().split('T')[0];
+				}
+
+				// compare
 				switch (chn + ' ' + con) {
 					case 'AND =': f = f && item[key] === val; break;
 					case 'AND >': f = f && item[key] > val; break;
@@ -656,7 +664,8 @@ class Model extends Core {
 			if (val.string || val.string === null) return String(val.string);
 			if (val.number || val.number === null) return Number(val.number);
 			if (val.booolean || val.boolean === null) return Boolean(val.boolean);
-			if (val.date || val.date === null) return Date(val.date);
+			if (val.date || val.date === null) return new Date(val.date);
+			if (val.dateTime || val.dateTime === null) return new Date(val.dateTime);
 		}
 
 		// else just return it
