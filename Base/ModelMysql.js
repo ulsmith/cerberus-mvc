@@ -567,7 +567,7 @@ class Model extends Core {
 
 			// build up where string, does this need to be cast to date for date checks
 			if (w[k].date) q += ` ${c === 0 ? '' : chn} DATE(${this.inject(DataTools.camelToSnake(this.table + '.' + key))}) ${con} DATE(${bnd}) `;
-			else q += ` ${c === 0 ? '' : chn} DATE(${this.inject(DataTools.camelToSnake(this.table + '.' + key))}) ${con} DATE(${bnd}) `;
+			else q += ` ${c === 0 ? '' : chn} ${this.inject(DataTools.camelToSnake(this.table + '.' + key))} ${con} ${bnd} `;
 
 			// track count
 			c++;
