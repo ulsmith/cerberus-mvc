@@ -19,6 +19,7 @@ class Response {
 		this.status;
 		this.headers;
 		this.body;
+		this.isBase64Encoded;
 		this.set(data);
 	}
 
@@ -35,6 +36,7 @@ class Response {
 
 		if (data.status) this.status = data.status;
 		if (data.body !== undefined) this.body = this._parseBody(data.body, headers['Content-Type']);
+		if (data.isBase64Encoded !== undefined) this.isBase64Encoded = data.isBase64Encoded;
 	}
 
 	_parseBody(body, type) {
@@ -55,7 +57,8 @@ class Response {
 		return {
 			statusCode: this.status,
 			headers: this.headers,
-			body: this.body
+			body: this.body,
+			isBase64Encoded: this.isBase64Encoded
 		}
 	}
 
