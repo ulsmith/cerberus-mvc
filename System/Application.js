@@ -160,9 +160,9 @@ class Application {
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
-					status: error.name.toLowerCase() === 'error' ? 500 : error.status || 400,
+					status: ['error', 'typeerror'].includes(error.name.toLowerCase()) ? 500 : error.status || 400,
 					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-					body: error.name.toLowerCase() === 'resterror' ? error.message : (error.name.toLowerCase() === 'error' ? 'system error' : error)
+					body: error.name.toLowerCase() === 'resterror' ? error.message : (['error', 'typeerror'].includes(error.name.toLowerCase()) ? 'internal error' : error)
 				});
 			})
 			
