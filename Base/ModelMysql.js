@@ -310,10 +310,8 @@ class Model extends Core {
 	 *	}
 	 */
 	arrayWhere(args, items) {
-		// find query args, or reject if function args
-		if (!args || args.fn || (args.qy && !args.qy.where)) return items;
-
-		return this.__parseArrayWhere(args.qy || args, items);
+		if (Object.keys(args.where || args).length < 1) return items;
+		return this.__parseArrayWhere(args, items);
 	}
 
 	/**
