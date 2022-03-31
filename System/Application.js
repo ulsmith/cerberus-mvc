@@ -155,8 +155,8 @@ class Application {
 				body: out && out.body && out.status ? out.body : (out ? out : null)
 			}))
 			.catch((error) => {
-				// catch any other errors
-				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				// catch any other errors, log errors to console
+				console.log(error.message, JSON.stringify(error.stack));
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
@@ -171,8 +171,8 @@ class Application {
 
 			// finally catch any last issues in middleware and output back to lambda, important to ensure middleware can run in event of ocntroller error
 			.catch((error) => {
-				// catch any other errors
-				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				// catch any other errors, log errors to console
+				console.log(error.message, JSON.stringify(error.stack));
 
 				// other errors like model, service etc (custom)
 				return new Response(this._type, {
