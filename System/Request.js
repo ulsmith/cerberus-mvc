@@ -35,20 +35,58 @@ class Request {
 	 * @return {Object} Middleware available
 	 */
 	_awsParse(data) {
+		// API Gateway, run and return
 		if (data.httpMethod) {
-			// API Gateway
 			this.source = 'route';
-			this[`_${this.type}Route`](data);
-		} else if (data.eventSource) {
-			// Internal AWS Event (SQS)
-			this.source = 'event';
-			this[`_${this.type}Event`](data);
-		} else if (data.Records) {
-			// Internal AWS Events (SQS)
+			return this[`_${this.type}Route`](data);
+		}
+
+		// array of events, collect events and return
+		if (data.Records || data.rmqMessagesByQueue) {
+			// preset many
 			this.requests = [];
 			this.source = 'events';
-			for (const record of data.Records) this.requests.push(new Request(this.type, record));
+
+			// events wrapped in records array
+			if (data.Records) {
+				for (const record of data.Records) this.requests.push(new Request(this.type, record));
+				return;
+			}
+
+			// rabbit events with wrapped message array
+			if (data.rmqMessagesByQueue) {
+				// run through all queues
+				for (const q in data.rmqMessagesByQueue) {
+					// run through all messages
+					for (let i = 0; i < data.rmqMessagesByQueue[q].length; i++) {
+						// wrap messages in common event object
+						this.requests.push(new Request(this.type, {
+							...data.rmqMessagesByQueue[q][i],
+							eventSource: data.eventSource,
+							eventSourceARN: (data.eventSourceArn || data.eventSourceARN) + ':' + q.split('::')[0]
+						}));					
+					}
+				}
+				return;
+			}
+
+			return; // ensure we dont process further in event of typos or updates...
 		}
+
+		// new remap data for event processing
+		switch (data.eventSource) {
+			case 'aws:sqs':
+				data.context = { id: data.messageId, service: data.eventSource, receiptHandle: data.receiptHandle };
+			break;
+			case 'aws:rmq':
+				data.context = { ...data.basicProperties, redelivered: data.redelivered };
+				data.body = Buffer.from(data.data, 'base64').toString('utf8');
+			break;
+		}
+		
+		// individual events, run and return
+		this.source = 'event';
+		this[`_${this.type}Event`](data);
 	}
 
 	/**
@@ -72,19 +110,43 @@ class Request {
 	}
 
 	/**
-	 * @public @get environment
-	 * @desciption Get the environment data available to the system
-	 * @return {Object} Middleware available
-	 * arn:aws:sqs:us-east-2:123456789012:cerberus_some-path_bounce
+	 * @private _awsEvent
+	 * @desciption This is a single AWS event of unknown type (SQS compatible), try to handle it
+	 * SQS, RMQ...
+	 * Nameing of event/queue is [system] double seperator [location] double seperator [controller]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:system-name--controller-name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:system.name..controller.name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:system_name__controller_name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:systemName/controllerName]
+	 * For system specific events all pointing to [system-name] system [src/Controller/ControllerName.js] controller [awsXxx] method
+	 * 
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue-name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue.name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue_name]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queueName]
+	 * For generic events on service for any type of system subscribed, pointing to subscribed system [src/Controller/QueueName.js] controller [awsXxx] method
+	 * 
+	 * Use double seperaters or slash in event/queue names to specify a sub folders in MVC
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue-name--something-else]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue.name..something.else]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue_name__something_else]
+	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queueName/somethingElse]
+	 * All point to [src/Controller/QueueName/SomethinElse.js] controller [awsXxx] method
 	 */
 	_awsEvent(data) {
-		const esa = data.eventSourceARN.toLowerCase().split(':' + (process.env.API_NAME || '').toLowerCase() + '_');
-		const method = esa[1] ? esa[1].split('_')[0] : '';
-		const resource = esa[1] ? esa[1].split('_')[1].split('-').join('/') : '';
+		// convert aws:xxx to method name awsXxx
+		const method = data.eventSource.toLowerCase().replace(/\:\w/g, (m) => m[1].toUpperCase()); 
+		
+		// convert queue name to controller path as capital case
+		const resource = (data.eventSourceArn || data.eventSourceARN)
+			.split(':')
+			.pop()
+			.split(/--|__|\.\.|\/\/|\//)
+			.map((p) => p.replace(/^\w/g, (m) => m[0].toUpperCase()).replace(/\-\w|\_\w|\.\w/g, (m) => m[1].toUpperCase()))
+			.join('/'); 
 
-		// "eventSourceARN": "arn:aws:sqs:us-east-2:123456789012:cerberus_post_email-autoblock",
 		// normalized request object
-		this.context = { id: data.messageId, service: data.eventSource, receiptHandle: data.receiptHandle };
+		this.context = data.context;
 		this.method = method;
 		this.path = resource;
 		this.resource = { path: '/' + resource };
@@ -199,7 +261,7 @@ class Request {
 	_parseBody(body, type) {
 		// convert body
 		switch (type) {
-			case 'application/json': try { return JSON.parse(body) } catch (e) { return {} }
+			case 'application/json': try { return JSON.parse(body) } catch (e) { return body }
 			default: return body;
 		}
 	}

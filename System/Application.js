@@ -134,8 +134,8 @@ class Application {
 		}
 
 		return Promise.all(promises)
-			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'application/json' }, body: { success: 'OK' }})).get())
-			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: '400 Could not process all requests' })).get()))
+			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'application/json' }, body: responses.map((r) => r.get().body) })).get())
+			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: { message: '400 Could not process all requests', detail: responses.map((r) => r.get().body) } })).get()))
 	}
 
 	_process(controller, request) {
