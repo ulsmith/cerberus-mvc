@@ -98,7 +98,8 @@ class Application {
 				this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import('../../../src/Controller/' + path))[0] : require('../../../src/Controller/' + path));
 				request.access = this._controller[name][request.method];
 			} catch (error) {
-				if (process.__environment.API_MODE === 'development') console.log(error.message, JSON.stringify(error.stack));
+				// catch any other errors, log errors to console
+				if (!error.exception) console.warn(error.message, JSON.stringify(error.stack));
 				
 				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) {
 					return Promise.resolve((new Response(this._type, {
