@@ -4,8 +4,8 @@ const { Client } = require('pg');
 
 /**
  * @namespace API/Service
- * @class Knex
- * @extends knex (the knex base class from npm)
+ * @class Postgres
+ * @extends Client (the pg base class from npm)
  * @description Service class providing database connection using knex.js
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
