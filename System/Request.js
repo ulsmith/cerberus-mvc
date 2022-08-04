@@ -83,7 +83,7 @@ class Request {
 				data.body = Buffer.from(data.data, 'base64').toString('utf8');
 			break;
 		}
-		
+
 		// individual events, run and return
 		this.source = 'event';
 		this[`_${this.type}Event`](data);
@@ -111,8 +111,8 @@ class Request {
 
 	/**
 	 * @private _awsEvent
-	 * @desciption This is a single AWS event of unknown type (SQS compatible), try to handle it
-	 * SQS, RMQ...
+	 * @desciption This is a single AWS event of unknown type (SQS compatible, Event Bridge compatible), try to handle it
+	 * SQS, RMQ, event bridge etc...
 	 * Nameing of event/queue is [system] double seperator [location] double seperator [controller]
 	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:system-name--controller-name]
 	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:system.name..controller.name]
@@ -132,13 +132,15 @@ class Request {
 	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queue_name__something_else]
 	 * eventSource [aws:XXX] eventSourceARN [arn:aws:XXX:us-east-2:123456789012:queueName/somethingElse]
 	 * All point to [src/Controller/QueueName/SomethinElse.js] controller [awsXxx] method
+	 * 
+	 * for event bridge send in Input: '{"method": "get", "path": "controllerName"}' which will turn up on the data property
 	 */
 	_awsEvent(data) {
 		// convert aws:xxx to method name awsXxx
-		const method = data.eventSource.toLowerCase().replace(/\:\w/g, (m) => m[1].toUpperCase()); 
+		const method = data.eventSource ? data.eventSource.toLowerCase().replace(/\:\w/g, (m) => m[1].toUpperCase()) : data.method; 
 		
 		// convert queue name to controller path as capital case
-		const resource = (data.eventSourceArn || data.eventSourceARN)
+		const resource = (data.eventSourceArn || data.eventSourceARN || data.path)
 			.split(':')
 			.pop()
 			.split(/--|__|\.\.|\/\/|\//)
@@ -151,7 +153,7 @@ class Request {
 		this.path = resource;
 		this.resource = { path: '/' + resource };
 		this.headers = { 'Content-Type': 'application/json' };
-		this.body = this._parseBody(data.body, this.headers['Content-Type']);
+		this.body = this._parseBody(data.body || data, this.headers['Content-Type']);
 	}
 
 	/**

@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.0.51
+
+Added support for event bridge
+
 ## 1.0.29
 
 Fixed faulty crypto classes
