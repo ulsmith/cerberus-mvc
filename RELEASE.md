@@ -1,5 +1,16 @@
 # RELEASE
 
+## 1.1.0
+
+New middleware lifecycle, introduced three new middleware hooks 'start', 'end' and 'mount' to accompany 'in' and 'out'.
+In and out should function as is, for backawards camptibility, start is before anything loads, so mutliple requests can be seen (as some internal aws requests may come in many at a time)
+End is once all requests have been fullfilled for that instantiation.
+Mount is before each individual requests controller is mounted.
+
+You can benefit from moving middleware service instantiation to start and end, to ensure they are only called once... such as adding a postgres service. this ensures that we only ever load it once er session
+
+This should not break existing systems, but allow users to migrate to start and end for singleton service instantiation, with the others as a per request (which is just one on API gateway hits but could be many on SQS hits)
+
 ## 1.0.51
 
 Added support for event bridge

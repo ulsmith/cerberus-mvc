@@ -16,7 +16,7 @@ class Application {
 		process.__services = {};
 		process.__environment = {};
 		process.__handler = {};
-		this._middleware = { in: [], out: []};
+		this._middleware = { start: [], mount: [], in: [], out: [], end: []};
 		this._controller = {};
 		this._types = ['aws', 'express', 'socket'];
 		if (this._types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + this._types.join(', ') + ']');
@@ -44,9 +44,22 @@ class Application {
 	middleware(mw) {
 		mw = !Array.isArray(mw) ? [mw] : mw; 
 		for (let i = 0; i < mw.length; i++) {
+			if (mw[i].start) this._middleware.start.push(mw[i]);
+			if (mw[i].mount) this._middleware.mount.push(mw[i]);
 			if (mw[i].in) this._middleware.in.push(mw[i]);
 			if (mw[i].out) this._middleware.out.push(mw[i]);
+			if (mw[i].end) this._middleware.end.push(mw[i]);
 		}
+	}
+
+	middlewareInit(mw) {
+		mw = !Array.isArray(mw) ? [mw] : mw;
+		for (let i = 0; i < mw.length; i++) if (mw[i].start) this._middleware.start.push(mw[i]);
+	}
+
+	middlewareMount(mw) {
+		mw = !Array.isArray(mw) ? [mw] : mw;
+		for (let i = 0; i < mw.length; i++) if (mw[i].mount) this._middleware.mount.push(mw[i]);
 	}
 
 	middlewareIn(mw) {
@@ -59,10 +72,18 @@ class Application {
 		for (let i = 0; i < mw.length; i++) if (mw[i].out) this._middleware.out.push(mw[i]);
 	}
 
+	middlewareEnd(mw) {
+		mw = !Array.isArray(mw) ? [mw] : mw;
+		for (let i = 0; i < mw.length; i++) if (mw[i].end) this._middleware.end.push(mw[i]);
+	}
+
 	async run(data) {
 		let promises = [];
 		let requests = new Request(this._type, data);
 		requests = requests.requests || [requests];
+
+		// run middleware before anything mounted or checked
+		requests = await this._middleware.start.reduce((p, mw) => p.then((r) => mw.start(r)), Promise.resolve(requests));
 
 		if (data.socket) process.__socket = data.socket;
 		if (data.io) process.__io = data.io;
@@ -83,72 +104,102 @@ class Application {
 				})).get());
 			}
 
-			// parse resource to name and path 
-			let path = '', name = '';
-			let resourcePath = request.resource.path.split('/');
-			for (let i = 1; i < resourcePath.length; i++) {
-				if (!!resourcePath[i] && resourcePath[i].charAt(0) === '{') continue;
-				name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
-				path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
-			}
-			path = path.substring(0, path.length - 1) + (process.__handler.type === 'es-module' ? '.mjs' : '.js');
-
-			// resolve controller
-			try {
-				this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import('../../../src/Controller/' + path))[0] : require('../../../src/Controller/' + path));
-				request.access = this._controller[name][request.method];
-			} catch (error) {
-				// catch any other errors, log errors to console
-				if (!error.exception) console.warn(error.message, JSON.stringify(error.stack));
-				
-				if (error.message.toLowerCase().indexOf('cannot find module') >= 0) {
-					return Promise.resolve((new Response(this._type, {
-						status: 409,
-						headers: {
-							'Content-Type': 'application/json',
-							'Access-Control-Allow-Origin': request && request.headers && request.headers.Origin ? request.headers.Origin : '*',
-							'Access-Control-Allow-Credentials': 'true',
-							'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
-							'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-							'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
-						},
-						body: `409 Resource missing for [${request.path}]`
-					})).get());
-				}
-				
-				return Promise.resolve((new Response(this._type, {
-					status: 500,
-					headers: {
-						'Content-Type': 'application/json',
-						'Access-Control-Allow-Origin': request && request.headers && request.headers.Origin ? request.headers.Origin : '*',
-						'Access-Control-Allow-Credentials': 'true',
-						'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
-						'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-						'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
-					},
-					body: `500 Server Error [${request.path}]`
-				})).get());
-			}
-
 			// process requests
-			promises.push(this._process(new this._controller[name](), request));
+			promises.push(this._process(request));
 		}
 
 		return Promise.all(promises)
 			.then((responses) => responses.length < 2 ? responses[0].get() : (new Response(this._type, { status: 200, headers: { 'Content-Type': 'application/json' }, body: responses.map((r) => r.get().body) })).get())
 			.catch(() => Promise.resolve((new Response(this._type, { status: 400, headers: { 'Content-Type': 'application/json' }, body: { message: '400 Could not process all requests', detail: responses.map((r) => r.get().body) } })).get()))
+			.then((responses) => this._middleware.end.reduce((p, mw) => p.then((r) => mw.end(r)), Promise.resolve(responses)));
 	}
 
-	_process(controller, request) {
-		return Promise.resolve()
+	_process(request) {
+		return Promise.resolve(request)
 			// create client object
-			.then(() => process.__client = { origin: request.headers.Origin })
+			.then((req) => {
+				process.__client = { origin: req.headers.Origin };
+				return req;
+			})
 
-			// incoming middleware, run synchronously as each one impacts on the next
-			.then(() => this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(request)))
+			// mount middleware, before controller is resolved for each request, run synchronously as each one impacts on the next
+			.then((req) => this._middleware.mount.reduce((p, mw) => p.then((r) => mw.mount(r)), Promise.resolve(req)))
 
 			// run controller and catch errors
-			.then((req) => controller[req.method](req))
+			.then(async (req) => {
+				// parse resource to name and path 
+				let path = '', name = '';
+				let resourcePath = req.resource.path.split('/');
+				for (let i = 1; i < resourcePath.length; i++) {
+					if (!!resourcePath[i] && resourcePath[i].charAt(0) === '{') continue;
+					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
+					path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
+				}
+				path = path.substring(0, path.length - 1) + (process.__handler.type === 'es-module' ? '.mjs' : '.js');
+
+				// resolve controller
+				try {
+					this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import('../../../src/Controller/' + path))[0] : require('../../../src/Controller/' + path));
+					req.access = this._controller[name][req.method];
+				} catch (error) {
+					// catch any other errors, log errors to console
+					if (!error.exception) console.warn(error.message, JSON.stringify(error.stack));
+
+					if (error.message.toLowerCase().indexOf('cannot find module') >= 0) {
+						return Promise.resolve((new Response(this._type, {
+							status: 409,
+							headers: {
+								'Content-Type': 'application/json',
+								'Access-Control-Allow-Origin': req && req.headers && req.headers.Origin ? req.headers.Origin : '*',
+								'Access-Control-Allow-Credentials': 'true',
+								'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+								'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+								'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+							},
+							body: `409 Resource missing for [${req.path}]`
+						})).get());
+					}
+
+					return Promise.resolve((new Response(this._type, {
+						status: 500,
+						headers: {
+							'Content-Type': 'application/json',
+							'Access-Control-Allow-Origin': req && req.headers && req.headers.Origin ? req.headers.Origin : '*',
+							'Access-Control-Allow-Credentials': 'true',
+							'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+							'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+							'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+						},
+						body: `500 Server Error [${req.path}]`
+					})).get());
+				}
+
+				
+				// run middleware after mount of controller but before running it
+				req = await this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(req));
+
+				// instantiate and check
+				const controller = new this._controller[name]();
+				if (!controller[req.method]) {
+					return Promise.resolve((new Response(this._type, {
+						status: 405,
+						headers: {
+							'Content-Type': 'application/json',
+							'Access-Control-Allow-Origin': req && req.headers && req.headers.Origin ? req.headers.Origin : '*',
+							'Access-Control-Allow-Credentials': 'true',
+							'Access-Control-Allow-Headers': 'Accept, Cache-Control, Content-Type, Content-Length, Authorization, Pragma, Expires',
+							'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+							'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
+						},
+						body: `405 Method not allowed [${req.method}] for [${req.path}]`
+					})).get());
+				}
+
+				// run controller
+				return (new this._controller[name]())[req.method](req);
+			})
+
+			// handle response
 			.then((out) => new Response(this._type, {
 				isBase64Encoded: out.isBase64Encoded,
 				status: out && out.body && out.status ? out.status : 200,

@@ -22,12 +22,12 @@ class Knex extends Middleware {
 	}
 
     /**
-	 * @public @method out
+	 * @public @method end
 	 * @description Invoke middleware for outgoing response
      * @param {Object} response The outgoing response to API Gateway
      * @param {Object} context The lambda context
      */
-	out(response) {
+	end(response) {
 		let services = [];
 		for (const service in this.$services) {
 			if (this.$services[service].name === 'knex') {

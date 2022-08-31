@@ -22,11 +22,11 @@ class Dynamo extends Middleware {
 	}
 
 	/**
-	 * @public @method in
+	 * @public @method start
 	 * @description Invoke middleware for incoming request
 	 * @param {Object} request The incoming request to API Gateway
 	 */
-	in(request) {
+	start(request) {
 		// start DB connections to all postrgres DB's
 		let services = [];
 		for (const service in this.$services) {
