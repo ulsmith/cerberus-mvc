@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.1
+
+Updated express request to allow an array of methods to be used in template file fo routes, and also route / endpoint to Index.js controller 
+
 ## 1.1.0
 
 New middleware lifecycle, introduced three new middleware hooks 'start', 'end' and 'mount' to accompany 'in' and 'out'.
