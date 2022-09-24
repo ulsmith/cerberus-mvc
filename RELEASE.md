@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.2
+
+Updated application to accept a mode parameter on instantiation to force node mode, accpets 'module' for require() or 'es-module' for import. Note SAM and aws require node 14.X and up runtime. 
+
 ## 1.1.1
 
 Updated express request to allow an array of methods to be used in template file fo routes, and also route / endpoint to Index.js controller 

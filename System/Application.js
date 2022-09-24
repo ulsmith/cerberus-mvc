@@ -12,7 +12,7 @@ var Response = require('./Response');
  * @license MIT
  */
 class Application {
-	constructor(type) {
+	constructor(type, mode) {
 		process.__services = {};
 		process.__environment = {};
 		process.__handler = {};
@@ -34,6 +34,11 @@ class Application {
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
+
+		// if mode passed in, set it directly
+		if (mode) process.__handler.type = mode;
+
+		console.log(11, JSON.stringify(process.__handler));
 	}
 
 	service(s) {
