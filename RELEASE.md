@@ -1,6 +1,6 @@
 # RELEASE
 
-## 1.1.2
+## 1.1.3
 
 Updated application to accept a mode parameter on instantiation to force node mode, accpets 'module' for require() or 'es-module' for import. Note SAM and aws require node 14.X and up runtime. 
 

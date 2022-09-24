@@ -36,9 +36,8 @@ class Application {
 		}
 
 		// if mode passed in, set it directly
-		if (mode) process.__handler.type = mode;
-
-		console.log(11, JSON.stringify(process.__handler));
+		if (mode === 'es-module') process.__handler.type = 'es-module';
+		if (mode === 'module') process.__handler.type = 'module';
 	}
 
 	service(s) {
