@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.5
+
+Whoopsie missing fix added back in for mode switching, also added in further fix for unshift to ensure when you reduce path to nothing it will load index.
+
 ## 1.1.4
 
 Added a global environment variable override to allow us to add a path adjustment on the incomming request, this enables us to take ain a layer 7 routed style of endpint such as xxx.com/layer/seven/route/login

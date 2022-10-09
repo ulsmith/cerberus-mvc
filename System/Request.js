@@ -103,7 +103,12 @@ class Request {
 		this.context = { id: data.requestContext.requestId, ipAddress: data.requestContext.identity.sourceIp };
 		this.method = data.httpMethod ? data.httpMethod.toLowerCase() : undefined;
 		this.path = data.path
-		this.resource = { path: data.resource === '/{error+}' ? undefined : (data.resource === '/' ? '/index' : data.resource) };
+
+		let rpath = data.resource;
+		if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
+		if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+
+		this.resource = { path: data.resource === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : data.resource) };
 		this.parameters = { query: data.queryStringParameters || {}, path: data.pathParameters || {}};
 		this.headers = headers;
 		this.body = this._parseBody(data.body, headers['Content-Type']);
@@ -193,11 +198,15 @@ class Request {
 		if (resource && resource.path) {
 			Array.from(resource.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => keys = m.slice(1, m.length).map((p) => p.replace(/{|}|\+/g, '')));
 			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => values = m.slice(1, m.length));
-	
+		
+			let rpath = resource.path;
+			if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
+			if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+
 			this.resource = {
 				name: resource.name,
 				method: this.method.toLowerCase(),
-				path: resource.path === '/' ? '/index' : resource.path
+				path: rpath === '/' || rpath === '' ? '/index' : resource.path
 			};
 
 			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
