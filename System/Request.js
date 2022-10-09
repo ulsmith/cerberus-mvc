@@ -102,8 +102,8 @@ class Request {
 		// normalized request object
 		this.context = { id: data.requestContext.requestId, ipAddress: data.requestContext.identity.sourceIp };
 		this.method = data.httpMethod ? data.httpMethod.toLowerCase() : undefined;
-		this.path = data.path;
-		this.resource = { path: data.resource === '/{error+}' ? undefined : data.resource };
+		this.path = data.path
+		this.resource = { path: data.resource === '/{error+}' ? undefined : (data.resource === '/' ? '/index' : data.resource) };
 		this.parameters = { query: data.queryStringParameters || {}, path: data.pathParameters || {}};
 		this.headers = headers;
 		this.body = this._parseBody(data.body, headers['Content-Type']);

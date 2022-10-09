@@ -1,5 +1,20 @@
 # RELEASE
 
+## 1.1.4
+
+Added a global environment variable override to allow us to add a path adjustment on the incomming request, this enables us to take ain a layer 7 routed style of endpint such as xxx.com/layer/seven/route/login
+we may want this in a live enviornment, but locally and testing we may not, beacuse we can route traffic differently in these environments.
+
+This change allows us to shift a portion of the route off or unshift a portion of a new route on to the resolution of the controller endpoints.
+
+As such by adding '/layer/seven/route' to the environemnt variable CWC_PATH_UNSHIFT we end up routing this path to the controller at src/Controller/Login.js for commonjs modular setup and .mj for es modules (the systme supports both modes dependend on how you suffix your handler .js or .mjs).
+
+the end result is for a production template we can have layer seven routes map to base route address with layer seven routing in CDN such as xxx.com/layer/seven/route/login, and locally our template does not have this environment var set and we just connect to say localhost:8082/login. In both circumstances controllers start at src/Controller base route.
+
+To add a route portion to the beginning use unsift, you can use unsift to remove hte portion at the front and shift to add a portion to the front, in theory you could remove layer seven route and sit all your controllers ad a folder deep inside the Controller folder.
+
+These change is put in place to aid development and different routing stratagies allowing devs to not worry so much about URL's, keeping the code in the same place regardless of CDN or routing stratagy
+
 ## 1.1.3
 
 Updated application to accept a mode parameter on instantiation to force node mode, accpets 'module' for require() or 'es-module' for import. Note SAM and aws require node 14.X and up runtime. 

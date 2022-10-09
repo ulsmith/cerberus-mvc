@@ -12,7 +12,7 @@ var Response = require('./Response');
  * @license MIT
  */
 class Application {
-	constructor(type, mode) {
+	constructor(type) {
 		process.__services = {};
 		process.__environment = {};
 		process.__handler = {};
@@ -34,10 +34,6 @@ class Application {
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
-
-		// if mode passed in, set it directly
-		if (mode === 'es-module') process.__handler.type = 'es-module';
-		if (mode === 'module') process.__handler.type = 'module';
 	}
 
 	service(s) {
@@ -133,7 +129,14 @@ class Application {
 			.then(async (req) => {
 				// parse resource to name and path 
 				let path = '', name = '';
-				let resourcePath = req.resource.path.split('/');
+				
+				// adjust path prefix
+				let rpath = req.resource.path;
+				if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
+				if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+
+				// resolve name and path
+				let resourcePath = rpath.split('/');
 				for (let i = 1; i < resourcePath.length; i++) {
 					if (!!resourcePath[i] && resourcePath[i].charAt(0) === '{') continue;
 					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
