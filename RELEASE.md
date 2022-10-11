@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.6
+
+Fix for early failure when bootstrapping without a server (like mounting manually for testing). Need to ensure we end all services.
+
 ## 1.1.5
 
 Whoopsie missing fix added back in for mode switching, also added in further fix for unshift to ensure when you reduce path to nothing it will load index.

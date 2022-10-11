@@ -105,7 +105,7 @@ class Application {
 						'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
 					},
 					body: `404 Not Found [${request.path}]`
-				})).get());
+				})).get()).then((res) => this._middleware.end.reduce((p, mw) => p.then((r) => mw.end(r)), Promise.resolve()).then(() => res)); // make sure we end any started middleware on failure
 			}
 
 			// process requests
