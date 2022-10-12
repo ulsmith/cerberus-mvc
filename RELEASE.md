@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.7
+
+Change order of precedent of assigning env vars, with CLI being hte most important followed by those set in template.json for express based systems. Allows us to set vars for dev and override with say docker compose. Handy when running locally two ways. 
+
 ## 1.1.6
 
 Fix for early failure when bootstrapping without a server (like mounting manually for testing). Need to ensure we end all services.

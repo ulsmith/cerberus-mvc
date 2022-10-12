@@ -28,7 +28,7 @@ class Application {
 			try {
 				const template = require('../../../template.json');
 				if (template.global) {
-					if (template.global.environment) process.__environment = Object.assign({}, process.env, template.global.environment);
+					if (template.global.environment) process.__environment = Object.assign({}, template.global.environment, process.env);
 					if (template.global.handler) process.__handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
 				} 
 			}
