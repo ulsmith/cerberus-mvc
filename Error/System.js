@@ -29,7 +29,7 @@ class System extends Error {
 		this.message = message;
 		this.details = details || {};
 
-		if (process.__socket && process.__environment.API_MODE !== 'production') console.log(this);
+		if ((process.__environment.CMVC_LOGGING || 'all').toLowerCase() !== 'all') console.log(this);
 	}
 }
 

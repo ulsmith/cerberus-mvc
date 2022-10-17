@@ -185,10 +185,6 @@ class Application {
 					})).get());
 				}
 
-				
-				// run middleware after mount of controller but before running it
-				req = await this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(req));
-
 				// instantiate and check
 				const controller = new this._controller[name]();
 				if (!controller[req.method]) {
@@ -205,6 +201,9 @@ class Application {
 						body: `405 Method not allowed [${req.method}] for [${req.path}]`
 					})).get());
 				}
+
+				// run middleware after mount of controller but before running it
+				req = await this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(req));
 
 				// run controller
 				return (new this._controller[name]())[req.method](req);

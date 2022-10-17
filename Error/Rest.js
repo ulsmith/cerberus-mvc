@@ -29,7 +29,7 @@ class Rest extends Error {
 		this.message = message;
 		this.status = code;
 
-		if (process.__socket && process.__environment.API_MODE !== 'production') console.log(this);
+		if ((process.__environment.CMVC_LOGGING || 'all').toLowerCase() !== 'all') console.log(this);
 	}
 }
 

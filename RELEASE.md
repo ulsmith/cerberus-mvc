@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.1.8
+
+Need to ensure middleware 'in' is ran before endpoint but after instantiation to ensure method not allowed can be caught. Updated Cors middleware headers. Updated logging by adding logging var. All vars should be prefixed with CMVC_ in tmeplate.yaml ot tmeplate.json.
+
 ## 1.1.7
 
 Change order of precedent of assigning env vars, with CLI being hte most important followed by those set in template.json for express based systems. Allows us to set vars for dev and override with say docker compose. Handy when running locally two ways. 
