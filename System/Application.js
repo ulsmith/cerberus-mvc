@@ -211,7 +211,7 @@ class Application {
 
 			// handle response
 			.then((out) => new Response(this._type, {
-				isBase64Encoded: out.isBase64Encoded,
+				isBase64Encoded: out && out.isBase64Encoded,
 				status: out && out.body && out.status ? out.status : 200,
 				headers: { ...{ 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }, ...(out && out.body && out.headers ? out.headers : {}) },
 				body: out && out.body && out.status ? out.body : (out ? out : null)

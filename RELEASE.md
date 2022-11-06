@@ -1,5 +1,9 @@
 # RELEASE
 
+## 1.0.9
+
+Fix issue with empty responses failing... Update logging
+
 ## 1.1.8
 
 Need to ensure middleware 'in' is ran before endpoint but after instantiation to ensure method not allowed can be caught. Updated Cors middleware headers. Updated logging by adding logging var. All vars should be prefixed with CMVC_ in tmeplate.yaml ot tmeplate.json.

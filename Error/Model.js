@@ -28,8 +28,8 @@ class Model extends Error {
 		this.exception = true;
 		this.message = message;
 		this.details = details || {};
-
-		if ((process.__environment.CMVC_LOGGING || 'all').toLowerCase() !== 'all') console.log(this);
+		
+		if (['all', 'error'].includes((process.__environment.CMVC_LOGGING || 'all').toLowerCase())) console.log(this);
 	}
 }
 

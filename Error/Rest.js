@@ -29,7 +29,7 @@ class Rest extends Error {
 		this.message = message;
 		this.status = code;
 
-		if ((process.__environment.CMVC_LOGGING || 'all').toLowerCase() !== 'all') console.log(this);
+		if (['all', 'error'].includes((process.__environment.CMVC_LOGGING || 'all').toLowerCase())) console.log(this);
 	}
 }
 
