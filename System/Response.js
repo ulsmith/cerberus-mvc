@@ -12,7 +12,7 @@ var DataTools = require('../Library/DataTools');
  */
 class Response {
 	constructor (type, data) {
-		const types = ['aws', 'express', 'socket'];
+		const types = ['aws', 'azure', 'express', 'socket'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 
 		this.type = type;
@@ -59,6 +59,20 @@ class Response {
 			headers: this.headers,
 			body: this.body,
 			isBase64Encoded: this.isBase64Encoded
+		}
+	}
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
+	_azureConvert() {
+		// return nromalized request object
+		return {
+			status: this.status,
+			headers: this.headers,
+			body: this.body
 		}
 	}
 

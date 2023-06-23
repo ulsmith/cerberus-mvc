@@ -12,7 +12,7 @@ var DataTools = require('../Library/DataTools');
  */
 class Request {
 	constructor (type, data) {
-		const types = ['aws', 'express', 'socket'];
+		const types = ['aws', 'azure', 'express', 'socket'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 		
 		this.type = type;
@@ -90,7 +90,7 @@ class Request {
 	}
 
 	/**
-	 * @public @get environment
+	 * @public @get _awsRoute
 	 * @desciption Get the environment data available to the system
 	 * @return {Object} Middleware available
 	 */
@@ -159,6 +159,50 @@ class Request {
 		this.resource = { path: '/' + resource };
 		this.headers = { 'Content-Type': 'application/json' };
 		this.body = this._parseBody(data.body || data, this.headers['Content-Type']);
+	}
+
+	/**
+	 * @private _azureParse
+	 * @desciption parse the azure request
+	 */
+	_azureParse(data) {
+		if (!data.req || !data.req.method || !data.req.url) throw Error('Azure integration only currently supports requests from http triggers');
+
+		this.source = 'route';
+		this[`_${this.type}Route`](data);
+	}
+
+	/**
+	 * @public @get _azureRoute
+	 * @desciption Handle the azure route data
+	 */
+	_azureRoute(data) {
+		// normalize headers
+		const headers = {};
+		for (const key in data.headers) headers[DataTools.normalizeHeader(key)] = data.headers[key];
+
+		// normalized request object
+		this.context = { id: data.invocationId, ipAddress: data.req.headers['x-forwarded-for'] };
+		this.method = data.req.method ? data.req.method.toLowerCase() : undefined;
+		this.path = (data.req.originalUrl || data.req.url).replace(/https?:\/\/[a-zA-Z0-9_-]+[0-9:]+/, '').split('?')[0];
+
+		// resolve function file
+		try {
+			const fn = require(data.executionContext.functionDirectory + '/function.json');
+			const bn = fn.bindings.find((b) => b.type.toLowerCase() === 'httptrigger' && b.direction.toLowerCase() === 'in');
+			data.resource = bn.route;
+		} catch(err) {
+			throw Error('Cannot access azure function.json, please ensure you have a function.json file in a subfolder (as the function name) on root');
+		}
+
+		let rpath = data.resource;
+		if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
+		if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+
+		this.resource = { path: data.resource === '{*error}' || data.resource === '/{*error}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : data.resource) };
+		this.parameters = { query: data.req.query || {}, path: data.req.params || {} };
+		this.headers = data.req.headers;
+		this.body = this._parseBody(data.req.rawBody, this.headers['content-type']);
 	}
 
 	/**

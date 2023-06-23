@@ -1,6 +1,9 @@
 # RELEASE
 
-## 1.0.9
+## 1.2.1
+
+Added support for Azure Functions! choose azure form the CLI tool to create a new azure api
+## 1.1.9
 
 Fix issue with empty responses failing... Update logging
 
@@ -27,7 +30,7 @@ we may want this in a live enviornment, but locally and testing we may not, beac
 
 This change allows us to shift a portion of the route off or unshift a portion of a new route on to the resolution of the controller endpoints.
 
-As such by adding '/layer/seven/route' to the environemnt variable CWC_PATH_UNSHIFT we end up routing this path to the controller at src/Controller/Login.js for commonjs modular setup and .mj for es modules (the systme supports both modes dependend on how you suffix your handler .js or .mjs).
+As such by adding '/layer/seven/route' to the environemnt variable CWC_PATH_UNSHIFT we end up routing this path to the controller at src/Controller/Login.js for commonjs modular setup and .mj for es modules (the system supports both modes dependend on how you suffix your handler .js or .mjs).
 
 the end result is for a production template we can have layer seven routes map to base route address with layer seven routing in CDN such as xxx.com/layer/seven/route/login, and locally our template does not have this environment var set and we just connect to say localhost:8082/login. In both circumstances controllers start at src/Controller base route.
 

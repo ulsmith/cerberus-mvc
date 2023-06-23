@@ -18,12 +18,12 @@ class Application {
 		process.__handler = {};
 		this._middleware = { start: [], mount: [], in: [], out: [], end: []};
 		this._controller = {};
-		this._types = ['aws', 'express', 'socket'];
+		this._types = ['aws', 'azure', 'express', 'socket'];
 		if (this._types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + this._types.join(', ') + ']');
 		this._type = type;
 
 		// get env vars
-		if (this._type === 'aws') process.__environment = Object.assign({}, process.env);
+		if (this._type === 'aws' || this._type === 'azure') process.__environment = Object.assign({}, process.env);
 		else if (this._type === 'express' || this._type === 'socket') {
 			try {
 				const template = require('../../../template.json');
@@ -141,8 +141,9 @@ class Application {
 
 				// resolve name and path
 				let resourcePath = rpath.split('/');
-				for (let i = 1; i < resourcePath.length; i++) {
-					if (!!resourcePath[i] && resourcePath[i].charAt(0) === '{') continue;
+				for (let i = 0; i < resourcePath.length; i++) {
+					if (!resourcePath[i]) continue;
+					if (!resourcePath[i] || resourcePath[i].charAt(0) === '{') continue;
 					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
 					path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 				}
