@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @module cerberus-mvc/Library/ObjectTools
  * @class ObjectTools
@@ -8,7 +6,7 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class ObjectTools {
+export default class ObjectTools {
 
 	/**
 	 * @public @static @name propertiesMatch
@@ -17,10 +15,7 @@ class ObjectTools {
 	 * @param {String} obj2 The second object
 	 * @return {Boolean} True is both objects have the same properties
 	 */
-	static propertiesMatch(obj1, obj2) {
-		let i = Object.keys(Object.assign({}, obj1, obj2)).length;
-		return i === Object.keys(obj1).length && i === Object.keys(obj2).length;
-	}
+	static propertiesMatch(obj1: object, obj2: object): boolean;
 
 	/**
 	 * @public @static @name propertiesExist
@@ -29,10 +24,5 @@ class ObjectTools {
 	 * @param {String} obj2 The second object
 	 * @return {Boolean} True is both objects have the same properties
 	 */
-	static propertiesExist(obj1, obj2) {
-		for (const key in obj1) if (!obj2[key]) return false;
-		return true
-	}
+	static propertiesExist(obj1: object, obj2: object): boolean;
 }
-
-module.exports = ObjectTools;

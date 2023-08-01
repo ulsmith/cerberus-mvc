@@ -3,7 +3,7 @@
 const Middleware = require('../Base/Middleware');
 
 /**
- * @namespace MVC/Middleware
+ * @module cerberus-mvc/Middleware/Cors
  * @class Cors
  * @extends Middleware
  * @description Middleware class providing cors patching to outgoing response

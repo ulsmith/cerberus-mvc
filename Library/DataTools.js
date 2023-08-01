@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * @namespace MVC/Library
+ * @module cerberus-mvc/Library/DataTools
  * @class DataTools
  * @description Set of tools for playing with data
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

@@ -1,6 +1,4 @@
-'use strict';
-
-const Core = require('../System/Core.js');
+import Core from '../System/Core';
 
 /**
  * @module cerberus-mvc/Base/Controller
@@ -11,15 +9,4 @@ const Core = require('../System/Core.js');
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class Controller extends Core {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor() {
-		super();
-	}
-}
-
-module.exports = Controller;
+export default abstract class Controller<T> extends Core<T> {};

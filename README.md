@@ -6,7 +6,7 @@
 
 # INTRODUCTION
 
-Now Support AWS, ExpressJS (with child processes) and Socket.IO
+Now Supports AWS (lambda), Azure (Func), ExpressJS (with child processes) and Socket.IO in Javascript and Typescript
 
 CerberusMVC is simply a node MVC stack, that is used to create API's on FaaS backgrounds such as AWS's lambda, Google clouds compute, Azures function services as well as more natural Express JS setups and Socket.IO.
 

@@ -3,7 +3,7 @@
 const Middleware = require('../Base/Middleware');
 
 /**
- * @namespace API/Middleware
+ * @module cerberus-mvc/Middleware/Postgres
  * @class Postgres
  * @extends Middleware
  * @description Middleware class providing Postgres DB connection handling on incomming event and outgoing response

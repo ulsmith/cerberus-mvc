@@ -2,18 +2,18 @@
 
 const Core = require('cerberus-mvc/System/Core.js');
 const ModelError = require('cerberus-mvc/Error/Model.js');
-const DataTools = require('cerberus-mvc/Library/DataTools');
+const DataTools = require('cerberus-mvc/Library/DataTools.js');
 
 /**
- * @namespace MVC/Base
- * @class Model
+ * @module cerberus-mvc/Base/ModelMysql
+ * @class ModelMysql
  * @extends Core
  * @description System class to give a base for creating models, exposing the knex DB service and giving base methods
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class Model extends Core {
+class ModelMysql extends Core {
 
 	/**
 	 * @public @method constructor
@@ -763,4 +763,4 @@ class Model extends Core {
 	}
 }
 
-module.exports = Model;
+module.exports = ModelMysql;

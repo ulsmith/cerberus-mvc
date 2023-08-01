@@ -1,7 +1,5 @@
-'use strict';
-
-const Core = require('cerberus-mvc/System/Core.js');
-const ModelError = require('cerberus-mvc/Error/Model.js');
+import Core from '../System/Core';
+import Dynamo from '../Service/Dynamo';
 
 /**
  * @module cerberus-mvc/Base/ModelDynamo
@@ -12,52 +10,30 @@ const ModelError = require('cerberus-mvc/Error/Model.js');
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class ModelDynamo extends Core {
+export default abstract class ModelDynamo<T = object> extends Core<T> {
+
+	public dbname: string;
+	public params: object;
 
 	/**
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, params) {
-		super();
-		
-		if (!table) throw new ModelError('table is required in params for dynamo db connection');
-
-		this.dbname = dbname;
-		this.params = { ...{
-			TableName: table,
-			KeySchema: [
-				{
-					AttributeName: "id",
-					KeyType: "HASH"
-				}
-			],
-			AttributeDefinitions: [
-				{
-					AttributeName: "id",
-					AttributeType: "S"
-				}
-			],
-			ProvisionedThroughput: {
-				ReadCapacityUnits: 10,
-				WriteCapacityUnits: 10
-			}
-		}, ...(params || {})};
-	}
+	constructor(dbname: ModelDynamo['dbname'], table: string, params: ModelDynamo['params'])
 
 	/**
 	 * @public @get dynamo
 	 * @desciption Get the services available to the system
 	 * @return {Knex} Knex service abstracted to dynamo
 	 */
-	get dynamo() { return this.$services['dynamo:' + this.dbname].dynamo }
+	get dynamo(): Dynamo['dynamo'];
 
 	/**
 	 * @public @get db
 	 * @desciption Get the services available to the system
 	 * @return {Knex} Knex service abstracted to db
 	 */
-	get db() { return this.$services['dynamo:' + this.dbname].client }
+	get db(): Dynamo['client'];
 
 	/**
 	 * @public @method create
@@ -67,9 +43,7 @@ class ModelDynamo extends Core {
 	 * let dynamoSource = new DynamoSourceModel();
 	 * return dynamoSource.createTable();
 	 */
-	createTable() {
-		return new Promise((res, rej) => this.dynamo.createTable(this.params, (err, data) => err ? rej(err) : res(data)));
-	}
+	createTable(): Promise<any>;
 
 	/**
 	 * @public @method get
@@ -80,12 +54,7 @@ class ModelDynamo extends Core {
 	 * let dynamoSource = new DynamoSourceModel();
 	 * return dynamoSource.get('6ff98823-3c0b-4b09-a433-63fc55cfa6d0');
 	 */
-	get(key) {
-		return new Promise((res, rej) => this.db.get({
-			TableName: this.params.TableName,
-			Key: typeof key !== 'object' ? { [this.params.KeySchema[0].AttributeName]: key } : key
-		}, (err, data) => err ? rej(err) : res(data)))
-	}
+	get<T>(key: string | number | T): Promise<T>;
 
 	/**
 	 * @public @method put
@@ -107,13 +76,7 @@ class ModelDynamo extends Core {
 	 * 		}
 	 * });
 	 */
-	put(item) {
-		return new Promise((res, rej) => this.db.put({
-			TableName: this.params.TableName,
-			Item: item,
-			ReturnValues: "ALL_OLD"
-		}, (err, data) => err ? rej(err) : res(item)));
-	}
+	put<T>(item: T): Promise<T>;
 
 	/**
 	 * @public @method update
@@ -132,22 +95,7 @@ class ModelDynamo extends Core {
 	 * 		]
 	 * });
 	 */
-	update(key, item) {
-		// map data to update
-		let iKeys = Object.keys(item);
-		let uExp = 'SET ' + iKeys.map((k, i) => `#${i} = :${i}`).join(', ');
-		let eNames = iKeys.reduce((p, c, i) => ({ ...p, [`#${i}`]: c }), {});
-		let eValues = iKeys.reduce((p, c, i) => ({ ...p, [`:${i}`]: item[c] }), {});
-
-		return new Promise((res, rej) => this.db.update({
-			TableName: this.params.TableName,
-			Key: typeof key !== 'object' ? { [this.params.KeySchema[0].AttributeName]: key } : key,
-			UpdateExpression: uExp,
-			ExpressionAttributeNames: eNames,
-			ExpressionAttributeValues: eValues,
-			ReturnValues: "ALL_NEW"
-		}, (err, data) => err ? rej(err) : res(data)));
-	}
+	update<T>(key: string | number | T, item: T): Promise<T>;
 
 	/**
 	 * @public @method listAppend
@@ -166,22 +114,5 @@ class ModelDynamo extends Core {
 	 * 		]
 	 * });
 	 */
-	listAppend(key, item) {
-		// map data to update
-		let iKeys = Object.keys(item);
-		let uExp = 'SET ' + iKeys.map((k, i) => `#${i} = list_append(#${i}, :${i})`).join(', ');
-		let eNames = iKeys.reduce((p, c, i) => ({ ...p, [`#${i}`]: c }), {});
-		let eValues = iKeys.reduce((p, c, i) => ({ ...p, [`:${i}`]: item[c] }), {});
-
-		return new Promise((res, rej) => this.db.update({
-			TableName: this.params.TableName,
-			Key: typeof key !== 'object' ? { [this.params.KeySchema[0].AttributeName]: key } : key,
-			UpdateExpression: uExp,
-			ExpressionAttributeNames: eNames,
-			ExpressionAttributeValues: eValues,
-			ReturnValues: "ALL_NEW"
-		}, (err, data) => err ? rej(err) : res(data)));
-	}
+	listAppend<T>(key: string | number | T, item: T): Promise<T>;
 }
-
-module.exports = ModelDynamo;

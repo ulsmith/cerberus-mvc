@@ -3,7 +3,7 @@
 var DataTools = require('../Library/DataTools');
 
 /**
- * @namespace MVC/System
+ * @module cerberus-mvc/System/Request
  * @class Request
  * @description System class to give a base for all system classes, such as services, models, controllers
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

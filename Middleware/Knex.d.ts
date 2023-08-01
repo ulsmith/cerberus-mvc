@@ -1,6 +1,5 @@
-'use strict';
-
-const Middleware = require('../Base/Middleware');
+import Middleware from '../Base/Middleware';
+import Response from '../System/Response';
 
 /**
  * @module cerberus-mvc/Middleware/Knex
@@ -11,15 +10,13 @@ const Middleware = require('../Base/Middleware');
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-class Knex extends Middleware {
+export default class Knex extends Middleware {
 
 	/**
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor() {
-		super();
-	}
+	constructor();
 
     /**
 	 * @public @method end
@@ -27,18 +24,5 @@ class Knex extends Middleware {
      * @param {Object} response The outgoing response to API Gateway
      * @param {Object} context The lambda context
      */
-	end(response) {
-		let services = [];
-		for (const service in this.$services) {
-			if (this.$services[service].name === 'knex') {
-				services.push(this.$services[service].destroy().catch((error) => {
-					console.log('Check ALL connection settings: ' + error.message, JSON.stringify(error.stack));
-				}));
-			}
-		}
-
-		return Promise.all(services).then(() => response);
-	}
+	end(response: Response): Promise<Response>;
 }
-
-module.exports = Knex;

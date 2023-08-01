@@ -5,15 +5,15 @@ const ModelError = require('../Error/Model.js');
 const DataTools = require('../Library/DataTools');
 
 /**
- * @namespace MVC/Base
- * @class Model
+ * @module cerberus-mvc/Base/ModelPG
+ * @class ModelPG
  * @extends Core
  * @description System class to give a base for creating models, exposing the knex DB service and giving base methods
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class Model extends Core {
+class ModelPG extends Core {
 
 	/**
 	 * @public @method constructor
@@ -321,4 +321,4 @@ class Model extends Core {
 	}
 }
 
-module.exports = Model;
+module.exports = ModelPG;

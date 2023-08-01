@@ -3,7 +3,7 @@
 const { Client } = require('pg');
 
 /**
- * @namespace API/Service
+ * @module cerberus-mvc/Service/Postgres
  * @class Postgres
  * @extends Client (the pg base class from npm)
  * @description Service class providing database connection using knex.js

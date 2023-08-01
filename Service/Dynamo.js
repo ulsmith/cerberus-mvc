@@ -3,7 +3,7 @@
 var AWS = require('aws-sdk');
 
 /**
- * @namespace MVC/Service
+ * @module cerberus-mvc/Service/Dynamo
  * @class Dynamo
  * @description Service class providing database connection using knex.js
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

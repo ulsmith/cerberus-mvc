@@ -1,10 +1,11 @@
 'use strict';
 
-var Request = require('./Request');
-var Response = require('./Response');
+const Request = require('./Request');
+const Response = require('./Response');
+const Path = require('path');
 
 /**
- * @namespace MVC/System
+ * @module cerberus-mvc/System/Application
  * @class Application
  * @description System application handler, talking back to lambda to bridge LAPI with AWS
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>
@@ -12,7 +13,7 @@ var Response = require('./Response');
  * @license MIT
  */
 class Application {
-	constructor(type, mode) {
+	constructor(type, mode, controllerDir) {
 		process.__services = {};
 		process.__environment = {};
 		process.__handler = {};
@@ -22,6 +23,9 @@ class Application {
 		if (this._types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + this._types.join(', ') + ']');
 		this._type = type;
 
+		this._pwd = process.env.PWD || process.cwd() || '../';
+		this._controllerDir = !controllerDir ? Path.join(this._pwd, 'src/Controller') : (['/', '\\'].includes(controllerDir.charAt(0)) ? controllerDir : Path.join(this._pwd, controllerDir));
+
 		// get env vars
 		if (this._type === 'aws' || this._type === 'azure') process.__environment = Object.assign({}, process.env);
 		else if (this._type === 'express' || this._type === 'socket') {
@@ -30,7 +34,7 @@ class Application {
 				if (template.global) {
 					if (template.global.environment) process.__environment = Object.assign({}, template.global.environment, process.env);
 					if (template.global.handler) process.__handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
-				} 
+				} else process.__environment = Object.assign({}, process.env);
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
@@ -122,7 +126,7 @@ class Application {
 		return Promise.resolve(request)
 			// create client object
 			.then((req) => {
-				process.__client = { origin: req.headers.Origin };
+				process.__client = { origin: req.headers.Origin || req.headers.origin };
 				return req;
 			})
 
@@ -149,10 +153,9 @@ class Application {
 				}
 				path = path.substring(0, path.length - 1) + (process.__handler.type === 'es-module' ? '.mjs' : '.js');
 
-				// resolve controller
 				try {
-					this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import('../../../src/Controller/' + path))[0] : require('../../../src/Controller/' + path));
-					req.access = this._controller[name][req.method];
+					this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import(this._controllerDir.replace(/(\/)+$/, '') + '/' + path))[0] : require(this._controllerDir.replace(/(\/)+$/, '') + '/' + path));
+					req.access = this._controller[name][req.method] || {};
 				} catch (error) {
 					// catch any other errors, log errors to console
 					if (!error.exception) console.warn(error.message, JSON.stringify(error.stack));
@@ -168,7 +171,7 @@ class Application {
 								'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
 								'Access-Control-Expose-Headers': 'Cache-Control, Content-Type, Authorization, Pragma, Expires'
 							},
-							body: `409 Resource missing for [${req.path}]`
+							body: `409 Resource missing for [${req.path}], cannot resolve controller automatically due to incorrect PWD on host, or incorrect controllerDir set`
 						})).get());
 					}
 

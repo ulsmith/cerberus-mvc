@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * @namespace MVC/Error
+ * @module cerberus-mvc/Error/System
  * @class System
  * @extends Error
  * @description System class to give extended error functionality as a rest error, for returning back to client

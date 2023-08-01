@@ -1,6 +1,4 @@
-'use strict';
-
-const knex = require('knex');
+import knex from 'knex';
 
 /**
  * @module cerberus-mvc/Service/Knex
@@ -24,34 +22,19 @@ const knex = require('knex');
  *		}
  * })
  */
-class Knex extends knex {
+export default class Knex extends knex {
+
+	public service: string;
+	public connClient: object | string;
+	public host: string;
+	public port: number;
+	public db: string;
+	public user: string;
+	public password: string;
 
 	/**
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(connClient, host, port, db, user, password) {
-		// create knex
-		super(typeof connClient === 'object' ? connClient : {
-			client: connClient,
-			connection: {
-				host: host,
-				port: port,
-				database: db,
-				user: user,
-				password: password
-			}
-		});
-
-		// cache
-		this.service = db || connClient.connection.database;
-		this.connClient = connClient;
-		this.host = host;
-		this.port = port;
-		this.db = db;
-		this.user = user;
-		this.password = password;
-	}
+	constructor(connClient: string | object, host: string, port: number, db: string, user: string, password: string);
 }
-
-module.exports = Knex;

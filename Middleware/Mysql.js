@@ -3,7 +3,7 @@
 const Middleware = require('cerberus-mvc/Base/Middleware');
 
 /**
- * @namespace MVC/Middleware
+ * @module cerberus-mvc/Middleware/Mysql
  * @class Mysql
  * @extends Middleware
  * @description Middleware class providing Mysql DB connection handling on incomming event and outgoing response

@@ -3,7 +3,7 @@
 const amqp = require('amqplib');
 
 /**
- * @namespace API/Service
+ * @module cerberus-mvc/Service/Amqp
  * @class Amqp
  * @description Service class providing AMQP connection using amqplib.js
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

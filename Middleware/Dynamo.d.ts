@@ -1,6 +1,5 @@
-'use strict';
-
-const Middleware = require('cerberus-mvc/Base/Middleware');
+import Middleware from '../Base/Middleware';
+import Request from '../System/Request';
 
 /**
  * @module cerberus-mvc/Middleware/Dynamo
@@ -11,32 +10,18 @@ const Middleware = require('cerberus-mvc/Base/Middleware');
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-class Dynamo extends Middleware {
+export default class Dynamo extends Middleware {
 
 	/**
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor() {
-		super();
-	}
+	constructor();
 
 	/**
 	 * @public @method start
 	 * @description Invoke middleware for incoming request
 	 * @param {Object} request The incoming request to API Gateway
 	 */
-	start(request) {
-		// start DB connections to all postrgres DB's
-		let services = [];
-		for (const service in this.$services) {
-			if (this.$services[service].name === 'dynamo') {
-				services.push(this.$services[service]);
-			}
-		}
-
-		return Promise.all(services).then(() => request);
-	}
+	start(request: Request): Promise<Request>;
 }
-
-module.exports = Dynamo;

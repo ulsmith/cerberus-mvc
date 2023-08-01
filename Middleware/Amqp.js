@@ -3,7 +3,7 @@
 const Middleware = require('cerberus-mvc/Base/Middleware');
 
 /**
- * @namespace MVC/Middleware
+ * @module cerberus-mvc/Middleware/Amqp
  * @class Amqp
  * @extends Middleware
  * @description Middleware class providing Amqp DB connection handling on incomming event and outgoing response

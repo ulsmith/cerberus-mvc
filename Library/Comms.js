@@ -4,7 +4,7 @@ const aws = require('aws-sdk');
 const ses = new aws.SES({ region: 'eu-west-2' });
 
 /**
- * @namespace MVC/Library
+ * @module cerberus-mvc/Library/Comms
  * @class Comms
  * @description Common resource element, functional only, providing crypto functionality
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>
@@ -18,7 +18,7 @@ class Comms {
 	 * @description Base method when instantiating class
 	 */
 	constructor() {
-
+		console.log('This will be deprecated');
 	}
 
 	/**

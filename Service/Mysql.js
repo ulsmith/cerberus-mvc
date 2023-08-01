@@ -3,7 +3,7 @@
 const mysql2 = require("mysql2/promise");
 
 /**
- * @namespace MVC/Service
+ * @module cerberus-mvc/Service/Mysql
  * @class Mysql
  * @description Service class providing database connection using knex.js
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

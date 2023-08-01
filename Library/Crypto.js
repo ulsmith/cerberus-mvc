@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const JWT = require('jsonwebtoken');
 
 /**
- * @namespace MVC/Library
+ * @module cerberus-mvc/Library/Crypto
  * @class Crypto
  * @description Common resource element, functional only, providing crypto functionality
  * @author Paul Smith (ulsmith) <p@ulsmith.net> <pa.ulsmith.net>

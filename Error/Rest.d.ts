@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @module cerberus-mvc/Error/Rest
  * @class Rest
@@ -9,7 +7,7 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-class Rest extends Error {
+export default class Rest extends Error {
 
 	/**
 	 * @public @method constructor
@@ -17,20 +15,5 @@ class Rest extends Error {
 	 * @param {String} message The message to pass in as the error message
 	 * @param {Number} code The rest error code to output, along with the message
 	 */
-	constructor(message, code) {
-		// Pass remaining arguments (including vendor specific ones) to parent constructor
-		super();
-
-		// Maintains proper stack trace for where our error was thrown (only available on V8)
-		if (Error.captureStackTrace) Error.captureStackTrace(this, Rest);
-
-		this.name = 'RestError';
-		this.exception = true;
-		this.message = message;
-		this.status = code;
-
-		if (['all', 'error'].includes((process.__environment.CMVC_LOGGING || 'all').toLowerCase())) console.log(this);
-	}
+	constructor(message: string, code: number)
 }
-
-module.exports = Rest;
