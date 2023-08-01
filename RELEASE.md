@@ -1,5 +1,9 @@
 # RELEASE
 
+## 2.0.2
+
+Issue with express request catch all {error+} not patching through.
+
 ## 2.0.1
 
 Problem with package file, left over files setting. removed.

@@ -247,10 +247,11 @@ class Request {
 			if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
 			if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
 
+			
 			this.resource = {
 				name: resource.name,
 				method: this.method.toLowerCase(),
-				path: rpath === '/' || rpath === '' ? '/index' : resource.path
+				path: resource.path === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : resource.path)
 			};
 
 			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
@@ -302,7 +303,7 @@ class Request {
 			this.resource = {
 				name: resource.name,
 				method: resource.method.toLowerCase(),
-				path: resource.path
+				path: resource.path === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : resource.path)
 			};
 
 			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
