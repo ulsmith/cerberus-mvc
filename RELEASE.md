@@ -1,5 +1,9 @@
 # RELEASE
 
+## 2.0.1
+
+Problem with package file, left over files setting. removed.
+
 ## 2.0.0
 
 Added support for tpyescript, this is experimental at present, while types need to be adjusted.

@@ -1,6 +1,6 @@
 {
 	"name": "cerberus-mvc",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "An MVC Stack for serverless architectures. Create, develop and debug MVC, publish to serverless function as a service architectures like lambda/function and express. Currently supporting AWS (API, Gateway, Lambda, RDS, S3, SQS, SES and more), Azure functions, ExpressJS (clustered child processes per CPU) and sockets.",
 	"author": "Paul Smith",
 	"url": "https://github.com/ulsmith/cerberus-mvc",
@@ -10,9 +10,6 @@
 		"type": "git",
 		"url": "https://github.com/ulsmith/cerberus-mvc"
 	},
-	"files": [
-		"index.d.ts"
-	],
 	"exports": {
 		"./Base/*.js": "./Base/*.js",
 		"./Base/*": "./Base/*.js",
