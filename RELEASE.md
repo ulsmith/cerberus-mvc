@@ -1,5 +1,11 @@
 # RELEASE
 
+## 2.0.0
+
+Added support for tpyescript, this is experimental at present, while types need to be adjusted.
+Addition on suppert for specifying controller dir on application instantiation.
+adjusting of imports for TS support
+
 ## 1.2.1
 
 Added support for Azure Functions! choose azure form the CLI tool to create a new azure api
