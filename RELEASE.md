@@ -1,5 +1,9 @@
 # RELEASE
 
+## 2.0.3
+
+Update type for Request, as we only accept path based vars on API in lin ewith REST
+
 ## 2.0.2
 
 Issue with express request catch all {error+} not patching through.
