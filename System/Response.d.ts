@@ -6,12 +6,12 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default class Response {
+export default class Response<T = { headers: object, body: any; }> {
 	
 	public type: 'aws' | 'azure' | 'express' | 'socket';
 	public status: number;
-	public headers: object;
-	public body: string;
+	public headers: T['headers'];
+	public body: T['body'];
 	public isBase64Encoded: boolean;
 
 	constructor (type: Response['type'], data: any);

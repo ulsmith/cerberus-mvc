@@ -1,5 +1,9 @@
 # RELEASE
 
+## 2.0.4
+
+Update type for Response, to allow us ot inject in types
+
 ## 2.0.3
 
 Update type for Request, as we only accept path based vars on API in lin ewith REST
