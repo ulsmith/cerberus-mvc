@@ -8,23 +8,25 @@ import Response from'./Response';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
 */
-export default class Application {
+export default class Application<T> {
 	
-	constructor(type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null);
+	public globals: T;
 
-	service<T>(s: T | T[]);
+	constructor(type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null, forceGlobals?: boolean);
 
-	middleware<T>(mw: T | T[]);
+	service<TS>(s: TS | TS[]);
 
-	middlewareInit<T>(mw: T);
+	middleware<TM>(mw: TM | TM[]);
 
-	middlewareMount<T>(mw: T);
+	middlewareInit<TMI>(mw: TMI);
 
-	middlewareIn<T>(mw: T);
+	middlewareMount<TMM>(mw: TMM);
 
-	middlewareOut<T>(mw: T);
+	middlewareIn<TMIN>(mw: TMIN);
 
-	middlewareEnd<T>(mw: T);
+	middlewareOut<TMO>(mw: TMO);
+
+	middlewareEnd<TME>(mw: TME);
 
 	async run(data: any): Promise<Response>;
 }

@@ -10,7 +10,7 @@ import Dynamo from '../Service/Dynamo';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default abstract class ModelDynamo<T = object> extends Core<T> {
+export default abstract class ModelDynamo<T> extends Core<T> {
 
 	public dbname: string;
 	public params: object;
@@ -19,7 +19,7 @@ export default abstract class ModelDynamo<T = object> extends Core<T> {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname: ModelDynamo['dbname'], table: string, params: ModelDynamo['params'])
+	constructor(dbname: ModelDynamo['dbname'], table: string, params?: ModelDynamo['params'], globals?: T)
 
 	/**
 	 * @public @get dynamo

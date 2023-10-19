@@ -19,8 +19,8 @@ class ModelPG extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, softDelete, idCol, createdCol, updatedCol, deleteCol) {
-		super();
+	constructor(dbname, table, softDelete, idCol, createdCol, updatedCol, deleteCol, globals) {
+		super(globals);
 
 		this.dbname = dbname;
 		this.table = table;

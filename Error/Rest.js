@@ -16,8 +16,9 @@ class Rest extends Error {
 	 * @description Base method when instantiating class
 	 * @param {String} message The message to pass in as the error message
 	 * @param {Number} code The rest error code to output, along with the message
+	 * @param {string} logging logging: 'all' | 'error' | 'warning' | 'info' | 'none' 
 	 */
-	constructor(message, code) {
+	constructor(message, code, logging) {
 		// Pass remaining arguments (including vendor specific ones) to parent constructor
 		super();
 
@@ -29,7 +30,7 @@ class Rest extends Error {
 		this.message = message;
 		this.status = code;
 
-		if (['all', 'error'].includes((process.__environment.CMVC_LOGGING || 'all').toLowerCase())) console.log(this);
+		if (['all', 'error'].includes((logging || process.__CMVC_LOGGING).toLowerCase())) console.log(this);
 	}
 }
 

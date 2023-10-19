@@ -13,14 +13,6 @@ const Middleware = require('../Base/Middleware');
  */
 class Cors extends Middleware {
 
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor() {
-		super();
-	}
-
     /**
 	 * @public @method out
 	 * @description Invoke middleware for outgoing response

@@ -13,10 +13,15 @@ const Path = require('path');
  * @license MIT
  */
 class Application {
-	constructor(type, mode, controllerDir) {
-		process.__services = {};
-		process.__environment = {};
-		process.__handler = {};
+	constructor(type, mode, controllerDir, forceGlobals) {
+		// do we want to isolate globals from process (express and socket need this!)
+		this.globals = forceGlobals || ['express', 'socket'].includes(type) ? {} : process.__$globals = {};
+		this.globals.$services = {};
+		this.globals.$environment = {};
+		this.globals.$handler = {};
+
+		this.globals.$environment.random = Math.random();
+
 		this._middleware = { start: [], mount: [], in: [], out: [], end: []};
 		this._controller = {};
 		this._types = ['aws', 'azure', 'express', 'socket'];
@@ -27,26 +32,38 @@ class Application {
 		this._controllerDir = !controllerDir ? Path.join(this._pwd, 'src/Controller') : (['/', '\\'].includes(controllerDir.charAt(0)) ? controllerDir : Path.join(this._pwd, controllerDir));
 
 		// get env vars
-		if (this._type === 'aws' || this._type === 'azure') process.__environment = Object.assign({}, process.env);
+		if (this._type === 'aws' || this._type === 'azure') this.globals.$environment = Object.assign({}, process.env);
 		else if (this._type === 'express' || this._type === 'socket') {
 			try {
 				const template = require('../../../template.json');
 				if (template.global) {
-					if (template.global.environment) process.__environment = Object.assign({}, template.global.environment, process.env);
-					if (template.global.handler) process.__handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
-				} else process.__environment = Object.assign({}, process.env);
+					if (template.global.environment) this.globals.$environment = Object.assign({}, template.global.environment, process.env);
+					if (template.global.handler) this.globals.$handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
+				} else this.globals.$environment = Object.assign({}, process.env);
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
 
+		// ensure any required system env vars are set and available system wide at route process (not affected by shared process as system wide)
+		process.__CMVC_TYPE = this.globals.$environment.CMVC_TYPE = type;
+		process.__CMVC_NAME = this.globals.$environment.CMVC_NAME = this.globals.$environment.CMVC_NAME || 'CerberusMVC';
+		process.__CMVC_ADDRESS = this.globals.$environment.CMVC_ADDRESS = this.globals.$environment.CMVC_ADDRESS || 'localhost';
+		process.__CMVC_VERSION = this.globals.$environment.CMVC_VERSION = this.globals.$environment.CMVC_VERSION || 'x.x.x';
+		process.__CMVC_MODE = this.globals.$environment.CMVC_MODE = this.globals.$environment.CMVC_MODE || 'development';
+		process.__CMVC_CORS_LIST = this.globals.$environment.CMVC_CORS_LIST = this.globals.$environment.CMVC_CORS_LIST || 'http://localhost,http://localhost:5173,http://localhost:4173';
+		process.__CMVC_LOGGING = this.globals.$environment.CMVC_LOGGING = this.globals.$environment.CMVC_LOGGING || 'all';
+		process.__CMVC_PATH_SHIFT = this.globals.$environment.CMVC_PATH_SHIFT = this.globals.$environment.CMVC_PATH_SHIFT;
+		process.__CMVC_PATH_UNSHIFT = this.globals.$environment.CMVC_PATH_UNSHIFT = this.globals.$environment.CMVC_PATH_UNSHIFT;
+		process.__CMVC_FORCE_GLOBALS = !!forceGlobals;
+
 		// if mode passed in, set it directly
-		if (mode === 'es-module') process.__handler.type = 'es-module';
-		if (mode === 'module') process.__handler.type = 'module';
+		if (mode === 'es-module') this.globals.$handler.type = 'es-module';
+		if (mode === 'module') this.globals.$handler.type = 'module';
 	}
 
 	service(s) {
 		s = !Array.isArray(s) ? [s] : s;
-		for (let i = 0; i < s.length; i++) if (s[i].service) process.__services[s[i].service] = s[i];
+		for (let i = 0; i < s.length; i++) if (s[i].service) this.globals.$services[s[i].service] = s[i];
 	}
 
 	middleware(mw) {
@@ -87,14 +104,14 @@ class Application {
 
 	async run(data) {
 		let promises = [];
-		let requests = new Request(this._type, data);
+		let requests = new Request(this._type, data, this.globals);
 		requests = requests.requests || [requests];
 
 		// run middleware before anything mounted or checked
 		requests = await this._middleware.start.reduce((p, mw) => p.then((r) => mw.start(r)), Promise.resolve(requests));
 
-		if (data.socket) process.__socket = data.socket;
-		if (data.io) process.__io = data.io;
+		if (data.socket) this.globals.$socket = data.socket;
+		if (data.io) this.globals.$io = data.io;
 
 		for (const request of requests) {
 			if (!request.resource || !request.resource.path) {
@@ -126,7 +143,7 @@ class Application {
 		return Promise.resolve(request)
 			// create client object
 			.then((req) => {
-				process.__client = { origin: req.headers.Origin || req.headers.origin };
+				this.globals.$client = { origin: req.headers.Origin || req.headers.origin };
 				return req;
 			})
 
@@ -140,8 +157,8 @@ class Application {
 				
 				// adjust path prefix
 				let rpath = req.resource.path;
-				if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
-				if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+				if (this.globals.$environment.CMVC_PATH_UNSHIFT || this.globals.$environment.PATH_UNSHIFT) rpath = rpath.replace(this.globals.$environment.CMVC_PATH_UNSHIFT || this.globals.$environment.PATH_UNSHIFT, '');
+				if (this.globals.$environment.CMVC_PATH_SHIFT || this.globals.$environment.PATH_SHIFT) rpath = (this.globals.$environment.CMVC_PATH_SHIFT || this.globals.$environment.PATH_UNSHIFT) + rpath;
 
 				// resolve name and path
 				let resourcePath = rpath.split('/');
@@ -151,10 +168,10 @@ class Application {
 					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
 					path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 				}
-				path = path.substring(0, path.length - 1) + (process.__handler.type === 'es-module' ? '.mjs' : '.js');
+				path = path.substring(0, path.length - 1) + (this.globals.$handler.type === 'es-module' ? '.mjs' : '.js');
 
 				try {
-					this._controller[name] = (process.__handler.type === 'es-module' ? Object.values(await import(this._controllerDir.replace(/(\/)+$/, '') + '/' + path))[0] : require(this._controllerDir.replace(/(\/)+$/, '') + '/' + path));
+					this._controller[name] = (this.globals.$handler.type === 'es-module' ? Object.values(await import(this._controllerDir.replace(/(\/)+$/, '') + '/' + path))[0] : require(this._controllerDir.replace(/(\/)+$/, '') + '/' + path));
 					req.access = this._controller[name][req.method] || {};
 				} catch (error) {
 					// catch any other errors, log errors to console
@@ -190,7 +207,7 @@ class Application {
 				}
 
 				// instantiate and check
-				const controller = new this._controller[name]();
+				const controller = new this._controller[name](this.globals);
 				if (!controller[req.method]) {
 					return Promise.resolve((new Response(this._type, {
 						status: 405,
@@ -210,7 +227,7 @@ class Application {
 				req = await this._middleware.in.reduce((p, mw) => p.then((r) => mw.in(r)), Promise.resolve(req));
 
 				// run controller
-				return (new this._controller[name]())[req.method](req);
+				return (new this._controller[name](this.globals))[req.method](req);
 			})
 
 			// handle response

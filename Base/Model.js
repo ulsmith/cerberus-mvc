@@ -21,8 +21,8 @@ class Model extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table) {
-		super();
+	constructor(dbname, table, globals) {
+		super(globals);
 
 		this.dbname = dbname;
 		this.table = table;

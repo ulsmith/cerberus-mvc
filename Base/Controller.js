@@ -11,15 +11,6 @@ const Core = require('../System/Core.js');
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-class Controller extends Core {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor() {
-		super();
-	}
-}
+class Controller extends Core {}
 
 module.exports = Controller;

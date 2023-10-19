@@ -11,10 +11,11 @@ var DataTools = require('../Library/DataTools');
  * @license MIT 
  */
 class Request {
-	constructor (type, data) {
+	constructor (type, data, globals) {
 		const types = ['aws', 'azure', 'express', 'socket'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 		
+		this.globals = globals;
 		this.type = type;
 		this.source;
 		this.context;
@@ -49,7 +50,7 @@ class Request {
 
 			// events wrapped in records array
 			if (data.Records) {
-				for (const record of data.Records) this.requests.push(new Request(this.type, record));
+				for (const record of data.Records) this.requests.push(new Request(this.type, record, this.globals));
 				return;
 			}
 
@@ -64,7 +65,7 @@ class Request {
 							...data.rmqMessagesByQueue[q][i],
 							eventSource: data.eventSource,
 							eventSourceARN: (data.eventSourceArn || data.eventSourceARN) + ':' + q.split('::')[0]
-						}));					
+						}, this.globals));					
 					}
 				}
 				return;
@@ -105,8 +106,8 @@ class Request {
 		this.path = data.path
 
 		let rpath = data.resource;
-		if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
-		if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+		if (process.__CMVC_PATH_UNSHIFT) rpath = rpath.replace(process.__CMVC_PATH_UNSHIFT, '');
+		if (process.__CMVC_PATH_SHIFT) rpath = (process.__CMVC_PATH_SHIFT) + rpath;
 
 		this.resource = { path: data.resource === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : data.resource) };
 		this.parameters = { query: data.queryStringParameters || {}, path: data.pathParameters || {}};
@@ -196,8 +197,8 @@ class Request {
 		}
 
 		let rpath = data.resource;
-		if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
-		if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+		if (process.__CMVC_PATH_UNSHIFT) rpath = rpath.replace(process.__CMVC_PATH_UNSHIFT, '');
+		if (process.__CMVC_PATH_SHIFT) rpath = (process.__CMVC_PATH_SHIFT) + rpath;
 
 		this.resource = { path: data.resource === '{*error}' || data.resource === '/{*error}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : data.resource) };
 		this.parameters = { query: data.req.query || {}, path: data.req.params || {} };
@@ -244,8 +245,8 @@ class Request {
 			Array.from(this.path.matchAll(new RegExp('^' + resource.path.replace(/{.+\+}/g, '(.+)').replace(/{[^}]+}/g, '([^\/]+)') + '$', 'g')), (m) => values = m.slice(1, m.length));
 		
 			let rpath = resource.path;
-			if (process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT) rpath = rpath.replace(process.__environment.CMVC_PATH_UNSHIFT || process.__environment.PATH_UNSHIFT, '');
-			if (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_SHIFT) rpath = (process.__environment.CMVC_PATH_SHIFT || process.__environment.PATH_UNSHIFT) + rpath;
+			if (process.__CMVC_PATH_UNSHIFT) rpath = rpath.replace(process.__CMVC_PATH_UNSHIFT, '');
+			if (process.__CMVC_PATH_SHIFT) rpath = (process.__CMVC_PATH_SHIFT) + rpath;
 
 			
 			this.resource = {
@@ -254,7 +255,7 @@ class Request {
 				path: resource.path === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : resource.path)
 			};
 
-			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
+			if (resource.environment) this.globals.$environment = Object.assign({}, this.globals.$environment, resource.environment);
 		}
 
 		// need to use a match to now pull any params out and stuff them in paramters under path
@@ -306,7 +307,7 @@ class Request {
 				path: resource.path === '/{error+}' ? undefined : (rpath === '/' || rpath === '' ? '/index' : resource.path)
 			};
 
-			if (resource.environment) process.__environment = Object.assign({}, process.__environment, resource.environment);
+			if (resource.environment) this.globals.$environment = Object.assign({}, this.globals.$environment, resource.environment);
 		}
 
 		// need to use a match to now pull any params out and stuff them in paramters under path

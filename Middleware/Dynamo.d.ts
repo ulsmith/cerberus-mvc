@@ -10,13 +10,7 @@ import Request from '../System/Request';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-export default class Dynamo extends Middleware {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor();
+export default class Dynamo<T> extends Middleware<T> {
 
 	/**
 	 * @public @method start

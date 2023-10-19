@@ -10,15 +10,15 @@ import Mysql from '../Service/Mysql';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default abstract class ModelMysql<T = object> extends Core<T> {
+export default abstract class ModelMysql<T> extends Core<T> {
 
 	public dbname: string;
 	public table: string;
-	public softDelete: boolean | undefined;
-	public idCol: string | undefined;
-	public createdCol: string | undefined;
-	public updatedCol: string | undefined;
-	public deleteCol: string | undefined;
+	public softDelete: boolean;
+	public idCol: string;
+	public createdCol: string;
+	public updatedCol: string;
+	public deleteCol: string;
 	
 	/**
 	 * @public @method constructor
@@ -27,11 +27,12 @@ export default abstract class ModelMysql<T = object> extends Core<T> {
 	constructor(
 		dbname: ModelMysql['dbname'],
 		table: ModelMysql['table'],
-		softDelete: ModelMysql['softDelete'],
-		idCol: ModelMysql['idCol'],
-		createdCol: ModelMysql['createdCol'],
-		updatedCol: ModelMysql['updatedCol'],
-		deleteCol: ModelMysql['deleteCol']
+		softDelete?: ModelMysql['softDelete'],
+		idCol?: ModelMysql['idCol'],
+		createdCol?: ModelMysql['createdCol'],
+		updatedCol?: ModelMysql['updatedCol'],
+		deleteCol?: ModelMysql['deleteCol'],
+		globals?: T
 	);
 
 	/**

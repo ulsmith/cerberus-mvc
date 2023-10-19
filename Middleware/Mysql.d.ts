@@ -11,13 +11,7 @@ import Response from '../System/Response';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-export default class Mysql extends Middleware {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor();
+export default class Mysql<T> extends Middleware<T> {
 
 	/**
 	 * @public @method start

@@ -16,8 +16,9 @@ class System extends Error {
 	 * @description Base method when instantiating class
 	 * @param {String} message The message to pass in as the error message
 	 * @param {Mixed} details Any data to capture
+	 * @param {string} logging logging: 'all' | 'error' | 'warning' | 'info' | 'none' 
 	 */
-	constructor(message, details) {
+	constructor(message, details, logging) {
 		// Pass remaining arguments (including vendor specific ones) to parent constructor
 		super();
 
@@ -29,7 +30,7 @@ class System extends Error {
 		this.message = message;
 		this.details = details || {};
 
-		if (['all', 'error'].includes((process.__environment.CMVC_LOGGING || 'all').toLowerCase())) console.log(this);
+		if (['all', 'error'].includes((logging || process.__CMVC_LOGGING).toLowerCase())) console.log(this);
 	}
 }
 

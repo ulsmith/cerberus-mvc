@@ -12,15 +12,6 @@ const Middleware = require('../Base/Middleware');
  * @license MIT
  */
 class Knex extends Middleware {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor() {
-		super();
-	}
-
     /**
 	 * @public @method end
 	 * @description Invoke middleware for outgoing response

@@ -1,5 +1,53 @@
 # RELEASE
 
+## 3.0.0
+
+While every possible action has been taken to make this backwards compatible, please bare in mind this could be a breaking change.
+
+Express and socket IO need to have isolated globals to access services, env vars etc, which in a lamdba/function env we use process to achieve this.
+
+Due to express and socketIO using a fixed singular process, there is a requirement to to ensure this can be handled with confliction.
+
+In express or socketIO application types, it is now a requierment to pass in the application stack directly to anything that extends from core class directly or indirectly.
+
+Normal for aws and azure..
+
+```js
+const app = new Application('aws');
+const cmvcServiceOrMiddleware = new CerberusMVCService();
+const yourServiceOrMiddleware = new YourServiceOrMiddleware();
+```
+
+Using globals with express
+
+```js
+const app = new Application('express');
+const cmvcServiceOrMiddleware = new CerberusMVCService(app.globals);
+const yourServiceOrMiddleware = new YourServiceOrMiddleware(app.globals);
+```
+
+this will make app.globals available for this.$environment, this.$service etc from within the service
+
+Pass these in to any classes that extend core directly or indirectly for express and socket IO, failure to do so will result in a node Error to do so
+
+In typescript, we need to pass over the Globals type to any cerberus classes, your own will import Globals directly and push to extended class
+
+```ts
+const app = new Application<Globals>('express');
+const cmvcServiceOrMiddleware = new CerberusMVCService<Globals>(app.globals);
+const yourServiceOrMiddleware = new YourServiceOrMiddleware(app.globals); // import Globals type inside your own class, to get availability inside the class
+```
+
+Any type not express or socketIO should fall back naturally to process storing, due to the nature.
+
+You may override the automated behavour, forcing globals on all types using hte forceGlobals flag
+
+```js
+const app = new Application('express', null, true);
+const cmvcServiceOrMiddleware = new CerberusMVCService(app.globals);
+const yourServiceOrMiddleware = new YourServiceOrMiddleware(app.globals);
+```
+
 ## 2.0.4
 
 Update type for Response, to allow us ot inject in types

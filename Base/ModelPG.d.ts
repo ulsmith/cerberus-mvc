@@ -10,15 +10,15 @@ import Postgres from '../Service/Postgres';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default abstract class ModelPG<T = object> extends Core<T> {
+export default abstract class ModelPG<T> extends Core<T> {
 
 	public dbname: string;
 	public table: string;
-	public softDelete: boolean | undefined;
-	public idCol: string | undefined;
-	public createdCol: string | undefined;
-	public updatedCol: string | undefined;
-	public deleteCol: string | undefined;
+	public softDelete: boolean;
+	public idCol: string;
+	public createdCol: string;
+	public updatedCol: string;
+	public deleteCol: string;
 
 	/**
 	 * @public @method constructor
@@ -27,11 +27,12 @@ export default abstract class ModelPG<T = object> extends Core<T> {
 	constructor(
 		dbname: ModelPG['dbname'],
 		table: ModelPG['table'],
-		softDelete: ModelPG['softDelete'],
-		idCol: ModelPG['idCol'],
-		createdCol: ModelPG['createdCol'],
-		updatedCol: ModelPG['updatedCol'],
-		deleteCol: ModelPG['deleteCol']
+		softDelete?: ModelPG['softDelete'],
+		idCol?: ModelPG['idCol'],
+		createdCol?: ModelPG['createdCol'],
+		updatedCol?: ModelPG['updatedCol'],
+		deleteCol?: ModelPG['deleteCol'],
+		globals?: T
 	);
 
 	/**

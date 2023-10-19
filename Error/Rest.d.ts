@@ -7,13 +7,14 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-export default class Rest extends Error {
+export default class Rest<T> extends Error {
 
 	/**
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 * @param {String} message The message to pass in as the error message
 	 * @param {Number} code The rest error code to output, along with the message
+	 * @param {string} logging logging: 'all' | 'error' | 'warning' | 'info' | 'none' 
 	 */
-	constructor(message: string, code: number)
+	constructor(message: string, code: number, logging?: 'all' | 'error' | 'warning' | 'info' | 'none')
 }

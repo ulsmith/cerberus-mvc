@@ -18,8 +18,8 @@ class ModelDynamo extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, params) {
-		super();
+	constructor(dbname, table, params, globals) {
+		super(globals);
 		
 		if (!table) throw new ModelError('table is required in params for dynamo db connection');
 

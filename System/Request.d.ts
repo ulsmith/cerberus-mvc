@@ -6,7 +6,7 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default class Request<T = { access: object, headers: object, body: any; }> {
+export default class Request<T = { access: object, headers: object, body: any; }, G = { $environment: object, $client: object, $services: object[], $socket: object, $io: object }> {
 	
 	public type: 'aws' | 'azure' | 'express' | 'socket';
 	public source: string;
@@ -20,5 +20,5 @@ export default class Request<T = { access: object, headers: object, body: any; }
 	public body: T['body'];
 	public requests: Request[];
 
-	constructor (type: Request['type'], data: object);
+	constructor (type: Request['type'], data: object, globals: G);
 }

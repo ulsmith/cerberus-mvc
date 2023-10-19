@@ -19,8 +19,8 @@ class ModelMysql extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, softDelete, idCol, createdCol, updatedCol, deleteCol) {
-		super();
+	constructor(dbname, table, softDelete, idCol, createdCol, updatedCol, deleteCol, globals) {
+		super(globals);
 
 		this.dbname = !table ? this.$environment.MYSQL_DATABASE : dbname;
 		this.table = !table ? dbname : table;

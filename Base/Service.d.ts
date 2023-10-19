@@ -9,4 +9,4 @@ import Core from '../System/Core';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default abstract class Service<T = object> extends Core<T> {}
+export default abstract class Service<T> extends Core<T> {}

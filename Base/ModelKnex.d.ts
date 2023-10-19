@@ -10,7 +10,7 @@ import Knex from '../Service/Knex';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default abstract class ModelKnex<T = object> extends Core<T> {
+export default abstract class ModelKnex<T> extends Core<T> {
 
 	public dbname: string;
 	public table: string;
@@ -21,7 +21,7 @@ export default abstract class ModelKnex<T = object> extends Core<T> {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname: ModelKnex['dbname'], table: ModelKnex['table'], createdCol: ModelKnex['createdCol'], softDeleteCol: ModelKnex['softDeleteCol']);
+	constructor(dbname: ModelKnex['dbname'], table: ModelKnex['table'], createdCol?: ModelKnex['createdCol'], softDeleteCol?: ModelKnex['softDeleteCol'], globals?: T);
 
 	/**
 	 * @public @get db

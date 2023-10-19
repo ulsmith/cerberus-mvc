@@ -14,14 +14,6 @@ const Middleware = require('cerberus-mvc/Base/Middleware');
 class Mysql extends Middleware {
 
 	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor() {
-		super();
-	}
-
-	/**
 	 * @public @method start
 	 * @description Invoke middleware for incoming request
 	 * @param {Object} request The incoming request to API Gateway

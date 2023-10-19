@@ -10,13 +10,7 @@ import Response from '../System/Response';
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT
  */
-export default class Cors extends Middleware {
-
-	/**
-	 * @public @method constructor
-	 * @description Base method when instantiating class
-	 */
-	constructor();
+export default class Cors<T> extends Middleware<T> {
 
     /**
 	 * @public @method out

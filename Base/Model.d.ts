@@ -15,7 +15,7 @@ export default abstract class Model<T> extends Core<T> {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname: string, table: string);
+	constructor(dbname: string, table: string, globals?: T);
 
 	get db(): any;
 
