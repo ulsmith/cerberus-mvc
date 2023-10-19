@@ -1,5 +1,9 @@
 # RELEASE
 
+## 3.0.1
+
+Make this.$globals available too to make it easy to pass to things like models or other files from any class that extends core
+
 ## 3.0.0
 
 While every possible action has been taken to make this backwards compatible, please bare in mind this could be a breaking change.

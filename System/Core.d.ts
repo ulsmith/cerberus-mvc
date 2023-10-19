@@ -3,6 +3,8 @@ export default abstract class Core<T> {
 
 	constructor(globals?: T);
 
+	get $globals(): T;
+
 	get $environment(): T['$environment'];
 
 	/**

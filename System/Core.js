@@ -21,6 +21,13 @@ class Core {
 	 * @desciption Get the environment data available to the system
 	 * @return {Object} Middleware available
 	 */
+	get $globals() { return this.globals }
+
+	/**
+	 * @public @get environment
+	 * @desciption Get the environment data available to the system
+	 * @return {Object} Middleware available
+	 */
 	get $environment() { return this.globals.$environment }
 
 	/**
