@@ -1,5 +1,5 @@
 import Core from '../System/Core';
-import Postgres from '../Service/Postgres';
+import { Client } from 'pg';
 
 /**
  * @module cerberus-mvc/Base/ModelPG
@@ -27,11 +27,13 @@ export default abstract class ModelPG<T> extends Core<T> {
 	constructor(
 		dbname: ModelPG['dbname'],
 		table: ModelPG['table'],
-		softDelete?: ModelPG['softDelete'],
-		idCol?: ModelPG['idCol'],
-		createdCol?: ModelPG['createdCol'],
-		updatedCol?: ModelPG['updatedCol'],
-		deleteCol?: ModelPG['deleteCol'],
+		params?: {
+			softDelete?: ModelPG['softDelete'],
+			idCol?: ModelPG['idCol'],
+			createdCol?: ModelPG['createdCol'],
+			updatedCol?: ModelPG['updatedCol'],
+			deleteCol?: ModelPG['deleteCol']
+		},
 		globals?: T
 	);
 
@@ -40,7 +42,7 @@ export default abstract class ModelPG<T> extends Core<T> {
 	 * @desciption Get the services available to the system
 	 * @return {Knex} Knex service abstracted to db
 	 */
-	get db(): Postgres;
+	get db(): Client;
 
 	/**
 	 * @public notSoftDeleted

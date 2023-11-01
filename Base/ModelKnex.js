@@ -19,13 +19,13 @@ class ModelKnex extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, createdCol, softDeleteCol, globals) {
+	constructor(dbname, table, params, globals) {
 		super(globals);
 
 		this.dbname = dbname;
 		this.table = table;
-		this.createdCol = createdCol;
-		this.softDeleteCol = softDeleteCol;
+		this.createdCol = params?.createdCol;
+		this.softDeleteCol = params?.softDeleteCol;
 	}
 
 	/**

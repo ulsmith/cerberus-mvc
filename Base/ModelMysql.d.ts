@@ -27,11 +27,13 @@ export default abstract class ModelMysql<T> extends Core<T> {
 	constructor(
 		dbname: ModelMysql['dbname'],
 		table: ModelMysql['table'],
-		softDelete?: ModelMysql['softDelete'],
-		idCol?: ModelMysql['idCol'],
-		createdCol?: ModelMysql['createdCol'],
-		updatedCol?: ModelMysql['updatedCol'],
-		deleteCol?: ModelMysql['deleteCol'],
+		params?: {
+			softDelete?: ModelMysql['softDelete'],
+			idCol?: ModelMysql['idCol'],
+			createdCol?: ModelMysql['createdCol'],
+			updatedCol?: ModelMysql['updatedCol'],
+			deleteCol?: ModelMysql['deleteCol']
+		},
 		globals?: T
 	);
 

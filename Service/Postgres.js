@@ -19,15 +19,18 @@ class Postgres extends Client {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(host, port, db, user, password, connTimeout) {
+	constructor(host, port, db, user, password, ssl, connectionTimeoutMillis) {
+		connectionTimeoutMillis = connectionTimeoutMillis || 20000;
+
 		// create knex
 		super({
-			host: host,
-			port: port,
-			database: db,
-			user: user,
-			password: password,
-			connectionTimeoutMillis: connTimeout || 20000 // set connection timeout or default to 20s to ensure failure before lambda
+			host,
+			port,
+			db,
+			user,
+			password,
+			ssl,
+			connectionTimeoutMillis
 		});
 
 		// cache

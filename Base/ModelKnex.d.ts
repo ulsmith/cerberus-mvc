@@ -21,7 +21,7 @@ export default abstract class ModelKnex<T> extends Core<T> {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname: ModelKnex['dbname'], table: ModelKnex['table'], createdCol?: ModelKnex['createdCol'], softDeleteCol?: ModelKnex['softDeleteCol'], globals?: T);
+	constructor(dbname: ModelKnex['dbname'], table: ModelKnex['table'], params?: { createdCol?: ModelKnex['createdCol'], softDeleteCol?: ModelKnex['softDeleteCol'] }, globals?: T);
 
 	/**
 	 * @public @get db

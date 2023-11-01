@@ -1,5 +1,10 @@
 # RELEASE
 
+## 3.0.2
+
+Updated models to ensure we can use with TS correctly, moved all perameters too into object to follow same rules for each model type
+pg service now takes ssl param
+
 ## 3.0.1
 
 Make this.$globals available too to make it easy to pass to things like models or other files from any class that extends core
