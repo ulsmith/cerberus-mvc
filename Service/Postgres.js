@@ -19,14 +19,14 @@ class Postgres extends Client {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(host, port, db, user, password, ssl, connectionTimeoutMillis) {
+	constructor(host, port, database, user, password, ssl, connectionTimeoutMillis) {
 		connectionTimeoutMillis = connectionTimeoutMillis || 20000;
 
 		// create knex
 		super({
 			host,
 			port,
-			db,
+			database,
 			user,
 			password,
 			ssl,
@@ -35,10 +35,10 @@ class Postgres extends Client {
 
 		// cache
 		this.name = 'postgres';
-		this.service = 'postgres:' + db;
+		this.service = 'postgres:' + database;
 		this.host = host;
 		this.port = port;
-		this.db = db;
+		this.db = database;
 	}
 }
 

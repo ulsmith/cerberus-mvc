@@ -1,5 +1,9 @@
 # RELEASE
 
+## 3.0.3
+
+Typo in PG file making multi db systems unable to connect to db
+
 ## 3.0.2
 
 Updated models to ensure we can use with TS correctly, moved all perameters too into object to follow same rules for each model type
