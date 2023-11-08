@@ -1,5 +1,11 @@
 # RELEASE
 
+## 3.1.0
+
+Update to ensure you can run es-module without .mjs ext....
+
+Will try to resolve based on past usage, or sniffing handler ext... or you can fore to mjs-es-module now to load .mjs files. default is now js with type: module in package.json
+
 ## 3.0.3
 
 Typo in PG file making multi db systems unable to connect to db

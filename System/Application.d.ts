@@ -12,7 +12,7 @@ export default class Application<T> {
 	
 	public globals: T;
 
-	constructor(type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null, forceGlobals?: boolean);
+	constructor(type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'mjs-es-module' | 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null, forceGlobals?: boolean);
 
 	service<TS>(s: TS | TS[]);
 

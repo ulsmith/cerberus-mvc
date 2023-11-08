@@ -38,7 +38,7 @@ class Application {
 				const template = require('../../../template.json');
 				if (template.global) {
 					if (template.global.environment) this.globals.$environment = Object.assign({}, template.global.environment, process.env);
-					if (template.global.handler) this.globals.$handler = { file: template.global.handler, type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
+					if (template.global.handler) this.globals.$handler = { file: template.global.handler, ext: template.global.handler.split('.').pop() === 'mjs', type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
 				} else this.globals.$environment = Object.assign({}, process.env);
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
@@ -58,6 +58,10 @@ class Application {
 
 		// if mode passed in, set it directly
 		if (mode === 'es-module') this.globals.$handler.type = 'es-module';
+		if (mode === 'mjs-es-module') {
+			this.globals.$handler.ext = 'mjs';
+			this.globals.$handler.type = 'es-module';
+		}
 		if (mode === 'module') this.globals.$handler.type = 'module';
 	}
 
@@ -168,7 +172,7 @@ class Application {
 					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
 					path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 				}
-				path = path.substring(0, path.length - 1) + (this.globals.$handler.type === 'es-module' ? '.mjs' : '.js');
+				path = path.substring(0, path.length - 1) + (this.globals.$handler.ext === 'mjs' ? '.mjs' : '.js');
 
 				try {
 					this._controller[name] = (this.globals.$handler.type === 'es-module' ? Object.values(await import(this._controllerDir.replace(/(\/)+$/, '') + '/' + path))[0] : require(this._controllerDir.replace(/(\/)+$/, '') + '/' + path));
