@@ -38,11 +38,13 @@ class Application {
 				const template = require('../../../template.json');
 				if (template.global) {
 					if (template.global.environment) this.globals.$environment = Object.assign({}, template.global.environment, process.env);
-					if (template.global.handler) this.globals.$handler = { file: template.global.handler, ext: template.global.handler.split('.').pop() === 'mjs', type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
+					if (template.global.handler) this.globals.$handler = { file: template.global.handler, mjs: template.global.handler.split('.').pop() === 'mjs', type: template.global.handler.split('.').pop() === 'mjs' ? 'es-module' : 'module'};
 				} else this.globals.$environment = Object.assign({}, process.env);
 			}
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
+
+		console.log( this.globals.$handler)
 
 		// ensure any required system env vars are set and available system wide at route process (not affected by shared process as system wide)
 		process.__CMVC_TYPE = this.globals.$environment.CMVC_TYPE = type;
@@ -59,7 +61,7 @@ class Application {
 		// if mode passed in, set it directly
 		if (mode === 'es-module') this.globals.$handler.type = 'es-module';
 		if (mode === 'mjs-es-module') {
-			this.globals.$handler.ext = 'mjs';
+			this.globals.$handler.mjs = true;
 			this.globals.$handler.type = 'es-module';
 		}
 		if (mode === 'module') this.globals.$handler.type = 'module';
@@ -172,7 +174,7 @@ class Application {
 					name += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '');
 					path += resourcePath[i].replace(/\b[a-z]/g, (char) => { return char.toUpperCase() }).replace(/_|-|\s/g, '') + '/';
 				}
-				path = path.substring(0, path.length - 1) + (this.globals.$handler.ext === 'mjs' ? '.mjs' : '.js');
+				path = path.substring(0, path.length - 1) + (this.globals.$handler.mjs ? '.mjs' : '.js');
 
 				try {
 					this._controller[name] = (this.globals.$handler.type === 'es-module' ? Object.values(await import(this._controllerDir.replace(/(\/)+$/, '') + '/' + path))[0] : require(this._controllerDir.replace(/(\/)+$/, '') + '/' + path));

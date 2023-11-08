@@ -1,5 +1,9 @@
 # RELEASE
 
+## 3.1.1
+
+MJS fallback fix
+
 ## 3.1.0
 
 Update to ensure you can run es-module without .mjs ext....
