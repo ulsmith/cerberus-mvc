@@ -1,5 +1,9 @@
 # RELEASE
 
+## 3.1.2
+
+Console log removal
+
 ## 3.1.1
 
 MJS fallback fix

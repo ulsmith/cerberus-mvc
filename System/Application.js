@@ -44,8 +44,6 @@ class Application {
 			catch (e) { throw Error('Cannot located template.json in project root') }
 		}
 
-		console.log( this.globals.$handler)
-
 		// ensure any required system env vars are set and available system wide at route process (not affected by shared process as system wide)
 		process.__CMVC_TYPE = this.globals.$environment.CMVC_TYPE = type;
 		process.__CMVC_NAME = this.globals.$environment.CMVC_NAME = this.globals.$environment.CMVC_NAME || 'CerberusMVC';
