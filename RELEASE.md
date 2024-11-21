@@ -1,5 +1,9 @@
 # RELEASE
 
+## 3.1.3
+
+Added support for query string parameters to Request typescript type
+
 ## 3.1.2
 
 Console log removal

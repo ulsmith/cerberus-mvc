@@ -15,7 +15,7 @@ export default class Request<T = { access: object, headers: object, body: any; }
 	public method: string;
 	public path: string;
 	public resource: object;
-	public parameters: { path: object };
+	public parameters: { path: object, query: object };
 	public headers: T['headers'];
 	public body: T['body'];
 	public requests: Request[];
