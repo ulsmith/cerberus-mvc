@@ -19,7 +19,7 @@ export default abstract class ModelDynamo<T> extends Core<T> {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname: ModelDynamo['dbname'], table: string, params?: ModelDynamo['params'], globals?: T)
+	constructor(globals: T, dbname: ModelDynamo['dbname'], table: string, params?: ModelDynamo['params']);
 
 	/**
 	 * @public @get dynamo

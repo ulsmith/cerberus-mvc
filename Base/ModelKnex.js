@@ -19,7 +19,7 @@ class ModelKnex extends Core {
 	 * @public @method constructor
 	 * @description Base method when instantiating class
 	 */
-	constructor(dbname, table, params, globals) {
+	constructor(globals, dbname, table, params) {
 		super(globals);
 
 		this.dbname = dbname;

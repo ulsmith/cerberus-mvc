@@ -11,7 +11,7 @@ var DataTools = require('../Library/DataTools');
  * @license MIT 
  */
 class Request {
-	constructor (type, data, globals) {
+	constructor (globals, type, data) {
 		const types = ['aws', 'azure', 'express', 'socket'];
 		if (types.indexOf(type) < 0) throw Error('Type does not exist, please add a type of request [' + types.join(', ') + ']');
 		

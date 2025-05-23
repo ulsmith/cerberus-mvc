@@ -13,9 +13,9 @@ const Path = require('path');
  * @license MIT
  */
 class Application {
-	constructor(type, mode, controllerDir, forceGlobals) {
-		// do we want to isolate globals from process (express and socket need this!)
-		this.globals = forceGlobals || ['express', 'socket'].includes(type) ? {} : process.__$globals = {};
+	constructor(request, type, mode, controllerDir) {
+		this.request = request;
+		this.globals = {};
 		this.globals.$services = {};
 		this.globals.$environment = {};
 		this.globals.$handler = {};
@@ -45,16 +45,15 @@ class Application {
 		}
 
 		// ensure any required system env vars are set and available system wide at route process (not affected by shared process as system wide)
-		process.__CMVC_TYPE = this.globals.$environment.CMVC_TYPE = type;
-		process.__CMVC_NAME = this.globals.$environment.CMVC_NAME = this.globals.$environment.CMVC_NAME || 'CerberusMVC';
-		process.__CMVC_ADDRESS = this.globals.$environment.CMVC_ADDRESS = this.globals.$environment.CMVC_ADDRESS || 'localhost';
-		process.__CMVC_VERSION = this.globals.$environment.CMVC_VERSION = this.globals.$environment.CMVC_VERSION || 'x.x.x';
-		process.__CMVC_MODE = this.globals.$environment.CMVC_MODE = this.globals.$environment.CMVC_MODE || 'development';
-		process.__CMVC_CORS_LIST = this.globals.$environment.CMVC_CORS_LIST = this.globals.$environment.CMVC_CORS_LIST || 'http://localhost,http://localhost:5173,http://localhost:4173';
-		process.__CMVC_LOGGING = this.globals.$environment.CMVC_LOGGING = this.globals.$environment.CMVC_LOGGING || 'all';
-		process.__CMVC_PATH_SHIFT = this.globals.$environment.CMVC_PATH_SHIFT = this.globals.$environment.CMVC_PATH_SHIFT;
-		process.__CMVC_PATH_UNSHIFT = this.globals.$environment.CMVC_PATH_UNSHIFT = this.globals.$environment.CMVC_PATH_UNSHIFT;
-		process.__CMVC_FORCE_GLOBALS = !!forceGlobals;
+		this.globals.$environment.CMVC_TYPE = type;
+		this.globals.$environment.CMVC_NAME = this.globals.$environment.CMVC_NAME || 'CerberusMVC';
+		this.globals.$environment.CMVC_ADDRESS = this.globals.$environment.CMVC_ADDRESS || 'localhost';
+		this.globals.$environment.CMVC_VERSION = this.globals.$environment.CMVC_VERSION || 'x.x.x';
+		this.globals.$environment.CMVC_MODE = this.globals.$environment.CMVC_MODE || 'development';
+		this.globals.$environment.CMVC_CORS_LIST = this.globals.$environment.CMVC_CORS_LIST || 'http://localhost,http://localhost:5173,http://localhost:4173';
+		this.globals.$environment.CMVC_LOGGING = this.globals.$environment.CMVC_LOGGING || 'all';
+		this.globals.$environment.CMVC_PATH_SHIFT = this.globals.$environment.CMVC_PATH_SHIFT;
+		this.globals.$environment.CMVC_PATH_UNSHIFT = this.globals.$environment.CMVC_PATH_UNSHIFT;
 
 		// if mode passed in, set it directly
 		if (mode === 'es-module') this.globals.$handler.type = 'es-module';
@@ -106,16 +105,16 @@ class Application {
 		for (let i = 0; i < mw.length; i++) if (mw[i].end) this._middleware.end.push(mw[i]);
 	}
 
-	async run(data) {
+	async run() {
 		let promises = [];
-		let requests = new Request(this._type, data, this.globals);
+		let requests = new Request(this.globals, this._type, this.request);
 		requests = requests.requests || [requests];
 
 		// run middleware before anything mounted or checked
 		requests = await this._middleware.start.reduce((p, mw) => p.then((r) => mw.start(r)), Promise.resolve(requests));
 
-		if (data.socket) this.globals.$socket = data.socket;
-		if (data.io) this.globals.$io = data.io;
+		if (this.request.socket) this.globals.$socket = this.request.socket;
+		if (this.request.io) this.globals.$io = this.request.io;
 
 		for (const request of requests) {
 			if (!request.resource || !request.resource.path) {

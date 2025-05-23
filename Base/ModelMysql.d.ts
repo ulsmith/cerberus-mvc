@@ -25,6 +25,7 @@ export default abstract class ModelMysql<T> extends Core<T> {
 	 * @description Base method when instantiating class
 	 */
 	constructor(
+		globals: T,
 		dbname: ModelMysql['dbname'],
 		table: ModelMysql['table'],
 		params?: {
@@ -33,8 +34,7 @@ export default abstract class ModelMysql<T> extends Core<T> {
 			createdCol?: ModelMysql['createdCol'],
 			updatedCol?: ModelMysql['updatedCol'],
 			deleteCol?: ModelMysql['deleteCol']
-		},
-		globals?: T
+		}
 	);
 
 	/**

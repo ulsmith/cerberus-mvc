@@ -12,7 +12,7 @@ export default class Application<T> {
 	
 	public globals: T;
 
-	constructor(type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'mjs-es-module' | 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null, forceGlobals?: boolean);
+	constructor(request: any, type: 'aws' | 'azure' | 'express' | 'socket', mode?: 'mjs-es-module' | 'es-module' | 'module' | undefined | null, workingDir?: string | undefined | null, controllerDir?: string | undefined | null);
 
 	service<TS>(s: TS | TS[]);
 
@@ -28,5 +28,5 @@ export default class Application<T> {
 
 	middlewareEnd<TME>(mw: TME);
 
-	async run(data: any): Promise<Response>;
+	async run(): Promise<Response>;
 }

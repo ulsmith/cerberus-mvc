@@ -10,10 +10,9 @@
  */
 class Core {
 	constructor(globals) {
-		if (['express', 'socket'].includes(process.__CMVC_TYPE) && !globals) throw new Error('Must pass in globals object from application to all classes that extend core, for express and socket applicaiton types');
-		if (process.__CMVC_FORCE_GLOBALS && !globals) throw new Error('Must pass in globals object from application to all classes that extend core, when forceGlobals is set on application');
+		if (!globals) throw new Error('Must pass in globals object from application to all classes that extend core, to enable access to environment, services, client, socket and io etc');
 		
-		this.globals = globals || process.__$globals; // always go for passed in globals, fall back to process for aws and azure as they are single process per call
+		this.globals = globals;
 	}
 
 	/**

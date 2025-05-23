@@ -20,5 +20,5 @@ export default class Request<T = { access: object, headers: object, body: any; }
 	public body: T['body'];
 	public requests: Request[];
 
-	constructor (type: Request['type'], data: object, globals: G);
+	constructor (globals: G, type: Request['type'], data: object);
 }

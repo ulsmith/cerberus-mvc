@@ -25,6 +25,7 @@ export default abstract class ModelPG<T> extends Core<T> {
 	 * @description Base method when instantiating class
 	 */
 	constructor(
+		globals: T,
 		dbname: ModelPG['dbname'],
 		table: ModelPG['table'],
 		params?: {
@@ -33,8 +34,7 @@ export default abstract class ModelPG<T> extends Core<T> {
 			createdCol?: ModelPG['createdCol'],
 			updatedCol?: ModelPG['updatedCol'],
 			deleteCol?: ModelPG['deleteCol']
-		},
-		globals?: T
+		}
 	);
 
 	/**
