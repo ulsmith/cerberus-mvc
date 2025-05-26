@@ -30,7 +30,7 @@ class System extends Error {
 		this.message = message;
 		this.details = details || {};
 
-		if (['all', 'error'].includes((logging || process.__CMVC_LOGGING).toLowerCase())) console.log(this);
+		if (['all', 'error'].includes(logging?.toLowerCase())) console.log(this);
 	}
 }
 

@@ -1,5 +1,9 @@
 # RELEASE
 
+## 4.0.1
+
+Explicitly set logging on errors if wanted.
+
 ## 4.0.0
 
 This change is breaking!
