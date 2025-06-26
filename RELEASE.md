@@ -1,5 +1,9 @@
 # RELEASE
 
+## 4.0.2
+
+Fix type issues on Request and Response, core etc. For proper extending of types.
+
 ## 4.0.1
 
 Explicitly set logging on errors if wanted.

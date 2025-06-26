@@ -1,4 +1,4 @@
-export default abstract class Core<T> {
+export default abstract class Core<T extends { $environment?: { [key: string]: any }; $client?: { [key: string]: any }; $services?: { [key: string]: any }; $socket?: any; $io?: any }> {
 	private globals: T;
 
 	constructor(globals: T);
@@ -34,4 +34,4 @@ export default abstract class Core<T> {
 	 * @return {Object} io available
 	 */
 	get $io(): T['$io'];
-};
+}

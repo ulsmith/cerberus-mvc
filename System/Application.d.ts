@@ -28,5 +28,5 @@ export default class Application<T> {
 
 	middlewareEnd<TME>(mw: TME);
 
-	async run(): Promise<Response>;
+	run(): Promise<Response>;
 }

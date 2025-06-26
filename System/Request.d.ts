@@ -6,15 +6,18 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default class Request<T = { access: object, headers: object, body: any; }, G = { $environment: object, $client: object, $services: object[], $socket: object, $io: object }> {
+export default class Request<
+	T extends { context?: any; access?: any; resource?: any; headers?: any; body: any } = { context?: { [key: string]: any }, access?: { [key: string]: any }, resource?: { name: string, method: string, path: string }, headers?: object, body: any; },
+	G = { $environment: object, $client: object, $services: object[], $socket: object, $io: object }
+> {
 	
 	public type: 'aws' | 'azure' | 'express' | 'socket';
 	public source: string;
-	public context: object;
+	public context: T['context'];
 	public access: T['access'];
 	public method: string;
 	public path: string;
-	public resource: object;
+	public resource: T['resource'];
 	public parameters: { path: object, query: object };
 	public headers: T['headers'];
 	public body: T['body'];
