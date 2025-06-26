@@ -1,5 +1,9 @@
 # RELEASE
 
+## 4.0.3
+
+Allow string, string array or undefined on headers
+
 ## 4.0.2
 
 Fix type issues on Request and Response, core etc. For proper extending of types.

@@ -7,7 +7,7 @@
  * @license MIT 
  */
 export default class Request<
-	T extends { context?: any; access?: any; resource?: any; headers?: any; body: any } = { context?: { [key: string]: any }, access?: { [key: string]: any }, resource?: { name: string, method: string, path: string }, headers?: object, body: any; },
+	T extends { context?: any; access?: any; resource?: any; headers?: { [key: string]: string | string[] | undefined }; body: any } = { context?: { [key: string]: any }, access?: { [key: string]: any }, resource?: { name: string, method: string, path: string }, headers?: { [key: string]: string | string[] | undefined }, body: any; },
 	G = { $environment: object, $client: object, $services: object[], $socket: object, $io: object }
 > {
 	

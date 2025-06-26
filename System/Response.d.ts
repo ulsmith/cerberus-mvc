@@ -6,7 +6,7 @@
  * @copyright 2020 Paul Smith (ulsmith) all rights reserved
  * @license MIT 
  */
-export default class Response<T extends { headers: { [key: string]: string }, body: any } = { headers: { [key: string]: string }, body: any }> {
+export default class Response<T extends { headers: { [key: string]: string | string[] | undefined }, body: any } = { headers: { [key: string]: string | string[] | undefined }, body: any }> {
 	
 	public type: 'aws' | 'azure' | 'express' | 'socket';
 	public status: number;
