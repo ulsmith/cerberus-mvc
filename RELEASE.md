@@ -1,5 +1,9 @@
 # RELEASE
 
+## 4.0.4
+
+Fix string on where criteria for update method on ModelPG
+
 ## 4.0.3
 
 Allow string, string array or undefined on headers

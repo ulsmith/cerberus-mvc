@@ -107,7 +107,7 @@ export default abstract class ModelPG<T> extends Core<T> {
 	 * @param {Mixed} returning The array of returned columns or a string
 	 * @return {Promise} a resulting promise of data or error on failure
      */
-	update<T>(where: object, data: object | object[], returning: string[] | undefined): Promise<T[]>;
+	update<T>(where: object | string, data: object | object[], returning: string[] | undefined): Promise<T[]>;
 	
 	/**
      * @public @method delete
